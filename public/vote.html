@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vote - Harry's Behaviour</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="vote-container">
+    <h1>What did you think of Harry's behaviour?</h1>
+
+    <div id="vote-buttons" class="button-container">
+      <button class="vote-btn agree-btn" onclick="vote('agree')">AGREE</button>
+      <button class="vote-btn disagree-btn" onclick="vote('disagree')">DISAGREE</button>
+    </div>
+
+    <div id="thank-you" class="thank-you" style="display: none;">
+      <h2>Thank you for voting</h2>
+      <p>Your response has been recorded</p>
+    </div>
+  </div>
+
+  <script>
+    async function vote(choice) {
+      try {
+        const response = await fetch('/api/vote', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ vote: choice })
+        });
+
+        if (response.ok) {
+          document.getElementById('vote-buttons').style.display = 'none';
+          document.getElementById('thank-you').style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error submitting vote:', error);
+        alert('Error submitting vote. Please try again.');
+      }
+    }
+  </script>
+</body>
+</html>
