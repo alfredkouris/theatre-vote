@@ -122,6 +122,34 @@ body {
   font-family: 'Courier New', monospace;
 }
 
+.reset-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 15px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  background: linear-gradient(180deg, #666666 0%, #4a4a4a 100%);
+  color: white;
+  border: 2px solid #3a3a3a;
+  border-right: 3px solid #2a2a2a;
+  border-bottom: 3px solid #2a2a2a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.reset-btn:hover {
+  background: linear-gradient(180deg, #777777 0%, #5a5a5a 100%);
+}
+
+.reset-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
 /* Vote Page */
 .vote-container {
   max-width: 600px;

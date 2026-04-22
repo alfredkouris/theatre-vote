@@ -28,6 +28,7 @@
           <span class="value" id="disagree-count">0</span>
         </div>
       </div>
+      <button class="reset-btn" onclick="resetVotes()">RESET VOTES</button>
     </div>
   </div>
 
@@ -116,6 +117,22 @@
     // Poll for updates every 1 second
     updateVotes();
     setInterval(updateVotes, 1000);
+
+    // Reset votes
+    async function resetVotes() {
+      if (confirm('Reset all votes to zero?')) {
+        try {
+          const response = await fetch('/api/reset', {
+            method: 'POST'
+          });
+          if (response.ok) {
+            updateVotes();
+          }
+        } catch (error) {
+          console.error('Error resetting votes:', error);
+        }
+      }
+    }
   </script>
 </body>
 </html>
