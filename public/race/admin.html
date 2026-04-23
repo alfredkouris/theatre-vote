@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cake Race - Admin</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="admin-body">
+  <div class="admin-container">
+    <!-- Login Form -->
+    <div id="login-form" class="login-form">
+      <h2>🎮 Race Control Panel</h2>
+      <input type="password" id="password" placeholder="Admin Password" autocomplete="current-password">
+      <button onclick="login()" class="btn-primary">Login</button>
+      <p class="hint">Default password: theatre123</p>
+    </div>
+
+    <!-- Control Panel -->
+    <div id="control-panel" class="control-panel" style="display: none;">
+      <h2>🎮 Race Control Panel</h2>
+
+      <!-- Game State -->
+      <div class="state-section">
+        <div class="state-item">
+          <span class="label">Status:</span>
+          <span id="status" class="value status-badge">-</span>
+        </div>
+        <div class="state-item">
+          <span class="label">Current Round:</span>
+          <span id="current-round" class="value">-</span>
+        </div>
+        <div class="state-item">
+          <span class="label">Players:</span>
+          <span id="player-count" class="value">0</span>
+        </div>
+        <div class="state-item">
+          <span class="label">Active Players:</span>
+          <span id="active-count" class="value">0</span>
+        </div>
+      </div>
+
+      <!-- Control Buttons -->
+      <div class="control-buttons">
+        <button onclick="startRound()" id="start-btn" class="btn-success btn-large">
+          ▶️ Start Round
+        </button>
+        <button onclick="stopRound()" id="stop-btn" class="btn-warning btn-large" disabled>
+          ⏸️ Stop & Advance
+        </button>
+        <button onclick="resetGame()" class="btn-danger btn-large">
+          🔄 Reset Game
+        </button>
+      </div>
+
+      <!-- Player List -->
+      <div class="player-list-section">
+        <h3>Players</h3>
+        <div id="player-list" class="player-list"></div>
+      </div>
+
+      <!-- Round History -->
+      <div class="round-history-section">
+        <h3>Round History</h3>
+        <div id="round-history" class="round-history"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let adminPassword = null;
+    let raceState = null;
+
+    function login() {
+      adminPassword = document.getElementById('password').value;
+
+      if (!adminPassword) {
+        alert('Please enter a password');
+        return;
+      }
+
+      // Hide login, show control panel
+      document.getElementById('login-form').style.display = 'none';
+      document.getElementById('control-panel').style.display = 'block';
+
+      // Start polling
+      startPolling();
+    }
+
+    async function startRound() {
+      if (!confirm('Start the current round?')) return;
+
+      try {
+        const response = await fetch('/api/race/admin/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: adminPassword })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`Round ${data.round} started!`);
+        } else {
+          alert(`Error: ${data.error}`);
+        }
+      } catch (error) {
+        alert('Failed to start round');
+        console.error(error);
+      }
+    }
+
+    async function stopRound() {
+      if (!confirm('Stop the current round and advance winners?')) return;
+
+      try {
+        const response = await fetch('/api/race/admin/stop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: adminPassword })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          if (data.complete) {
+            const winner = raceState.players[data.winner];
+            alert(`🎉 WINNER: ${winner.name}!`);
+          } else {
+            alert(`Round complete! ${data.winners.length} players advance to Round ${data.nextRound}`);
+          }
+        } else {
+          alert(`Error: ${data.error}`);
+        }
+      } catch (error) {
+        alert('Failed to stop round');
+        console.error(error);
+      }
+    }
+
+    async function resetGame() {
+      if (!confirm('⚠️ Reset the entire game? This will clear all players and rounds!')) return;
+
+      try {
+        const response = await fetch('/api/race/admin/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: adminPassword })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Game reset successfully!');
+        } else {
+          alert(`Error: ${data.error}`);
+        }
+      } catch (error) {
+        alert('Failed to reset game');
+        console.error(error);
+      }
+    }
+
+    function updateDisplay(state) {
+      raceState = state;
+
+      // Update status
+      const statusBadge = document.getElementById('status');
+      statusBadge.textContent = state.status;
+      statusBadge.className = 'value status-badge status-' + state.status;
+
+      // Update round
+      document.getElementById('current-round').textContent = state.currentRound || 'Waiting';
+
+      // Update player counts
+      const totalPlayers = Object.keys(state.players).length;
+      const activePlayers = Object.values(state.players).filter(p => !p.eliminated).length;
+      document.getElementById('player-count').textContent = totalPlayers;
+      document.getElementById('active-count').textContent = activePlayers;
+
+      // Update button states
+      const startBtn = document.getElementById('start-btn');
+      const stopBtn = document.getElementById('stop-btn');
+
+      if (state.status === 'racing') {
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      } else {
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      }
+
+      // Update player list
+      updatePlayerList(state);
+
+      // Update round history
+      updateRoundHistory(state);
+    }
+
+    function updatePlayerList(state) {
+      const container = document.getElementById('player-list');
+      const players = Object.values(state.players);
+
+      if (players.length === 0) {
+        container.innerHTML = '<p class="empty-state">No players yet</p>';
+        return;
+      }
+
+      // Sort by current distance (if racing)
+      const currentRound = state.rounds[state.currentRound];
+      const sortedPlayers = players.sort((a, b) => {
+        if (!currentRound) return 0;
+        const distA = currentRound.positions[a.id] || 0;
+        const distB = currentRound.positions[b.id] || 0;
+        return distB - distA;
+      });
+
+      container.innerHTML = sortedPlayers.map(player => {
+        const distance = currentRound ? (currentRound.positions[player.id] || 0) : 0;
+        const taps = currentRound ? (currentRound.taps[player.id] || 0) : 0;
+        const meters = Math.floor(distance / 10);
+
+        const statusClass = player.eliminated ? 'eliminated' : 'active';
+
+        return `
+          <div class="player-item ${statusClass}">
+            <span class="player-name">${player.name}</span>
+            <span class="player-stats">
+              ${meters}m | ${taps} taps
+            </span>
+            <span class="player-status">
+              ${player.eliminated ? '❌ Eliminated' : '✅ Active'}
+            </span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateRoundHistory(state) {
+      const container = document.getElementById('round-history');
+      const rounds = Object.values(state.rounds);
+
+      if (rounds.length === 0) {
+        container.innerHTML = '<p class="empty-state">No rounds yet</p>';
+        return;
+      }
+
+      container.innerHTML = rounds.map(round => {
+        const roundNum = round.participants ? Object.keys(state.rounds).find(key => state.rounds[key] === round) : '?';
+        const participants = round.participants ? round.participants.length : 0;
+        const winners = round.winners ? round.winners.length : 0;
+
+        const status = round.endTime ? '✅ Complete' : round.startTime ? '🏁 Racing' : '⏳ Waiting';
+
+        return `
+          <div class="round-item">
+            <div class="round-header">
+              <strong>Round ${roundNum}</strong>
+              <span>${status}</span>
+            </div>
+            <div class="round-details">
+              Players: ${participants} | Winners: ${winners}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function pollStatus() {
+      try {
+        const response = await fetch('/api/race/status');
+        const state = await response.json();
+        updateDisplay(state);
+      } catch (error) {
+        console.error('Error polling status:', error);
+      }
+    }
+
+    function startPolling() {
+      pollStatus();
+      setInterval(pollStatus, 1000);
+    }
+  </script>
+</body>
+</html>

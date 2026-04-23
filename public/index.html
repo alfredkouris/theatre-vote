@@ -3,136 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Theatre Vote Display</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <title>Theatre Games</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+    }
+  </style>
 </head>
 <body>
-  <div class="display-container">
-    <div class="qr-section">
-      <h1>What did you think of Harry's behaviour?</h1>
-      <div id="qrcode"></div>
-      <p class="vote-url">Scan to vote</p>
-    </div>
-
-    <div class="graph-section">
-      <canvas id="voteChart"></canvas>
-      <div class="vote-counts">
-        <div class="count-item">
-          <span class="label">AGREE</span>
-          <span class="value" id="agree-count">0</span>
-        </div>
-        <div class="count-item">
-          <span class="label">DISAGREE</span>
-          <span class="value" id="disagree-count">0</span>
-        </div>
-      </div>
-      <button class="reset-btn" onclick="resetVotes()">RESET VOTES</button>
-    </div>
-  </div>
-
-  <script>
-    // Generate QR code
-    const voteUrl = `${window.location.origin}/vote.html`;
-    new QRCode(document.getElementById("qrcode"), {
-      text: voteUrl,
-      width: 200,
-      height: 200,
-      colorDark: "#2a2a2a",
-      colorLight: "#f5f5f5"
-    });
-
-    // Initialize Chart
-    const ctx = document.getElementById('voteChart').getContext('2d');
-    const chart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Agree', 'Disagree'],
-        datasets: [{
-          label: 'Votes',
-          data: [0, 0],
-          backgroundColor: ['#2a2a2a', '#666666'],
-          borderColor: ['#1a1a1a', '#4a4a4a'],
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1,
-              font: {
-                family: "'Courier New', monospace",
-                size: 14
-              }
-            },
-            grid: {
-              color: '#ddd'
-            }
-          },
-          x: {
-            ticks: {
-              font: {
-                family: "'Courier New', monospace",
-                size: 14,
-                weight: 'bold'
-              }
-            },
-            grid: {
-              display: false
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            display: false
-          }
-        },
-        animation: {
-          duration: 500
-        }
-      }
-    });
-
-    // Update votes
-    async function updateVotes() {
-      try {
-        const response = await fetch('/api/votes');
-        const votes = await response.json();
-
-        chart.data.datasets[0].data = [votes.agree, votes.disagree];
-        chart.update();
-
-        document.getElementById('agree-count').textContent = votes.agree;
-        document.getElementById('disagree-count').textContent = votes.disagree;
-      } catch (error) {
-        console.error('Error fetching votes:', error);
-      }
-    }
-
-    // Poll for updates every 1 second
-    updateVotes();
-    setInterval(updateVotes, 1000);
-
-    // Reset votes
-    async function resetVotes() {
-      if (confirm('Reset all votes to zero?')) {
-        try {
-          const response = await fetch('/api/reset', {
-            method: 'POST'
-          });
-          if (response.ok) {
-            updateVotes();
-          }
-        } catch (error) {
-          console.error('Error resetting votes:', error);
-        }
-      }
-    }
-  </script>
 </body>
 </html>

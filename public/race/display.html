@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cake Race - Display</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="cakes.js"></script>
+</head>
+<body>
+  <div class="race-container">
+    <!-- Header Section -->
+    <div class="race-header">
+      <div class="header-left">
+        <h1>CAKE RACE</h1>
+        <div class="round-info">
+          <span class="round-label">ROUND <span id="round-num">-</span></span>
+          <span class="timer" id="timer">--</span>
+        </div>
+        <div class="player-count">Players: <span id="player-count">0</span></div>
+      </div>
+
+      <div class="header-right">
+        <div class="qr-section">
+          <div id="qrcode"></div>
+          <p class="qr-label">Scan to join!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Race Track -->
+    <div class="race-track">
+      <div class="finish-line"></div>
+      <div id="lanes" class="lanes-container"></div>
+    </div>
+
+    <!-- Winner Overlay -->
+    <div id="winner-overlay" class="winner-overlay" style="display: none;">
+      <div class="winner-content">
+        <h2>🎉 WINNER! 🎉</h2>
+        <div id="winner-cake"></div>
+        <p id="winner-name"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Generate QR code
+    const playUrl = `${window.location.origin}/race/play.html`;
+    new QRCode(document.getElementById("qrcode"), {
+      text: playUrl,
+      width: 150,
+      height: 150,
+      colorDark: "#333",
+      colorLight: "#fff"
+    });
+
+    let raceState = null;
+    let pollInterval = null;
+
+    // Update display with race state
+    function updateDisplay(state) {
+      raceState = state;
+
+      // Update round number and status
+      const roundNum = state.currentRound || '-';
+      document.getElementById('round-num').textContent = roundNum;
+
+      // Update player count
+      const activePlayerCount = Object.values(state.players).filter(p => !p.eliminated).length;
+      document.getElementById('player-count').textContent = activePlayerCount;
+
+      // Update timer
+      if (state.status === 'racing' && state.rounds[state.currentRound]) {
+        const round = state.rounds[state.currentRound];
+        const elapsed = Date.now() - round.startTime;
+        const remaining = Math.max(0, 30 - Math.floor(elapsed / 1000));
+        document.getElementById('timer').textContent = `${remaining}s`;
+      } else if (state.status === 'complete') {
+        document.getElementById('timer').textContent = 'DONE';
+        showWinner(state);
+      } else {
+        document.getElementById('timer').textContent = 'WAITING';
+      }
+
+      // Update lanes
+      updateLanes(state);
+    }
+
+    // Update racing lanes
+    function updateLanes(state) {
+      const lanesContainer = document.getElementById('lanes');
+      const currentRound = state.rounds[state.currentRound];
+
+      if (!currentRound) {
+        lanesContainer.innerHTML = '<div class="waiting-message">Waiting for players to join...</div>';
+        return;
+      }
+
+      // Get participants for current round
+      const participants = currentRound.participants || [];
+
+      // Sort by distance (descending) for visual ordering
+      const sortedParticipants = participants
+        .map(playerId => ({
+          playerId,
+          player: state.players[playerId],
+          distance: currentRound.positions[playerId] || 0,
+          taps: currentRound.taps[playerId] || 0
+        }))
+        .filter(p => p.player) // Filter out any missing players
+        .sort((a, b) => b.distance - a.distance);
+
+      // Clear and rebuild lanes
+      lanesContainer.innerHTML = '';
+
+      sortedParticipants.forEach((participant, index) => {
+        const { playerId, player, distance, taps } = participant;
+
+        // Create or update lane
+        let lane = document.querySelector(`[data-player-id="${playerId}"]`);
+
+        if (!lane) {
+          lane = document.createElement('div');
+          lane.className = 'lane';
+          lane.setAttribute('data-player-id', playerId);
+
+          // Create lane structure
+          lane.innerHTML = `
+            <div class="lane-position">${index + 1}</div>
+            <div class="cake-runner" style="--distance: 0px;">
+              ${generateCakeSVG(getCakeById(player.cakeId))}
+            </div>
+            <div class="lane-info">
+              <span class="cake-name">${player.name}</span>
+              <span class="distance-display">0m</span>
+            </div>
+          `;
+
+          lanesContainer.appendChild(lane);
+        }
+
+        // Update position in list
+        lane.querySelector('.lane-position').textContent = index + 1;
+
+        // Update cake position
+        const runner = lane.querySelector('.cake-runner');
+        runner.style.setProperty('--distance', `${distance}px`);
+
+        // Update distance display
+        const meters = Math.floor(distance / 10);
+        lane.querySelector('.distance-display').textContent = `${meters}m`;
+
+        // Highlight leader
+        if (index === 0 && distance > 0) {
+          lane.classList.add('leader');
+        } else {
+          lane.classList.remove('leader');
+        }
+      });
+    }
+
+    // Show winner overlay
+    function showWinner(state) {
+      const round4 = state.rounds[4];
+      if (!round4 || !round4.winners || round4.winners.length === 0) return;
+
+      const winnerId = round4.winners[0];
+      const winner = state.players[winnerId];
+
+      if (!winner) return;
+
+      const overlay = document.getElementById('winner-overlay');
+      const cakeContainer = document.getElementById('winner-cake');
+      const nameElement = document.getElementById('winner-name');
+
+      cakeContainer.innerHTML = generateCakeSVG(getCakeById(winner.cakeId));
+      nameElement.textContent = winner.name;
+
+      overlay.style.display = 'flex';
+    }
+
+    // Start polling
+    function startPolling() {
+      // Initial load
+      fetchState();
+
+      // Clear existing interval
+      if (pollInterval) clearInterval(pollInterval);
+
+      // Poll based on race status
+      pollInterval = setInterval(() => {
+        fetchState();
+      }, raceState && raceState.status === 'racing' ? 200 : 1000);
+    }
+
+    // Fetch current race state
+    async function fetchState() {
+      try {
+        const response = await fetch('/api/race/status');
+        const state = await response.json();
+        updateDisplay(state);
+
+        // Adjust polling frequency if status changed
+        if (raceState && state.status !== raceState.status) {
+          startPolling();
+        }
+      } catch (error) {
+        console.error('Error fetching race state:', error);
+      }
+    }
+
+    // Initialize
+    window.addEventListener('load', () => {
+      startPolling();
+    });
+  </script>
+</body>
+</html>

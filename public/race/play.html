@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cake Race - Play</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="cakes.js"></script>
+</head>
+<body class="player-body">
+  <div class="player-container">
+    <!-- Status Section -->
+    <div class="status-section">
+      <h2 id="cake-name" class="cake-name-display">Connecting...</h2>
+      <div class="status-info">
+        <span id="round-status" class="round-status">Waiting to join...</span>
+      </div>
+    </div>
+
+    <!-- Cake Preview -->
+    <div id="cake-preview" class="cake-preview"></div>
+
+    <!-- Tap Button -->
+    <button id="tap-button" class="tap-button" disabled>
+      <span class="tap-text">TAP TO RUN!</span>
+    </button>
+
+    <!-- Stats Section -->
+    <div class="stats-section">
+      <div class="stat-item">
+        <span class="stat-label">Distance</span>
+        <span class="stat-value" id="distance">0m</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Taps</span>
+        <span class="stat-value" id="taps">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Round</span>
+        <span class="stat-value" id="current-round">-</span>
+      </div>
+    </div>
+
+    <!-- Eliminated Message -->
+    <div id="eliminated-message" class="eliminated-message" style="display: none;">
+      <p>😢 You've been eliminated!</p>
+      <p class="sub-message">Thanks for playing!</p>
+    </div>
+  </div>
+
+  <script>
+    let playerId = null;
+    let cakeData = null;
+    let isEliminated = false;
+    let localTaps = 0;
+    let localDistance = 0;
+
+    // Join race on load
+    window.addEventListener('load', async () => {
+      try {
+        const response = await fetch('/api/race/join', { method: 'POST' });
+        const data = await response.json();
+
+        playerId = data.playerId;
+        cakeData = getCakeById(data.cakeId);
+
+        // Update UI
+        document.getElementById('cake-name').textContent = data.cakeName;
+        document.getElementById('current-round').textContent = data.currentRound;
+
+        // Show cake preview
+        if (cakeData) {
+          document.getElementById('cake-preview').innerHTML = generateCakeSVG(cakeData);
+        }
+
+        // Enable tap button
+        document.getElementById('tap-button').disabled = false;
+
+        // Start polling status
+        startStatusPolling();
+      } catch (error) {
+        console.error('Error joining race:', error);
+        document.getElementById('cake-name').textContent = 'Connection Error';
+        document.getElementById('round-status').textContent = 'Please refresh to try again';
+      }
+    });
+
+    // Handle tap
+    document.getElementById('tap-button').addEventListener('click', async (e) => {
+      if (!playerId || isEliminated) return;
+
+      // Visual feedback
+      const button = e.currentTarget;
+      button.classList.add('tapped');
+      setTimeout(() => button.classList.remove('tapped'), 100);
+
+      try {
+        const response = await fetch('/api/race/tap', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playerId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          localTaps = data.taps;
+          localDistance = data.distance;
+
+          // Update local display immediately
+          document.getElementById('distance').textContent = `${Math.floor(localDistance / 10)}m`;
+          document.getElementById('taps').textContent = localTaps;
+        } else {
+          // Rate limited - show brief indicator
+          if (data.reason === 'rate-limited') {
+            button.classList.add('rate-limited');
+            setTimeout(() => button.classList.remove('rate-limited'), 300);
+          }
+        }
+      } catch (error) {
+        console.error('Error processing tap:', error);
+      }
+    });
+
+    // Poll race status
+    async function pollStatus() {
+      try {
+        const response = await fetch('/api/race/status');
+        const state = await response.json();
+
+        // Check if eliminated
+        if (state.players[playerId] && state.players[playerId].eliminated) {
+          if (!isEliminated) {
+            isEliminated = true;
+            showEliminated();
+          }
+        }
+
+        // Update round status
+        const statusMessages = {
+          'waiting': 'Waiting for round to start...',
+          'racing': `Round ${state.currentRound} - RACE!`,
+          'round-complete': 'Round complete - checking winners...',
+          'complete': 'Race finished!'
+        };
+
+        document.getElementById('round-status').textContent = statusMessages[state.status] || 'Unknown';
+        document.getElementById('current-round').textContent = state.currentRound || '-';
+
+        // Sync distance/taps from server
+        const currentRound = state.rounds[state.currentRound];
+        if (currentRound && currentRound.positions[playerId] !== undefined) {
+          const serverDistance = currentRound.positions[playerId];
+          const serverTaps = currentRound.taps[playerId] || 0;
+
+          // Only update if different (avoid overwriting local optimistic updates)
+          if (Math.abs(serverDistance - localDistance) > 10) {
+            localDistance = serverDistance;
+            document.getElementById('distance').textContent = `${Math.floor(serverDistance / 10)}m`;
+          }
+
+          if (serverTaps !== localTaps) {
+            localTaps = serverTaps;
+            document.getElementById('taps').textContent = serverTaps;
+          }
+        }
+      } catch (error) {
+        console.error('Error polling status:', error);
+      }
+    }
+
+    function startStatusPolling() {
+      pollStatus();
+      setInterval(pollStatus, 1000);
+    }
+
+    function showEliminated() {
+      document.getElementById('tap-button').disabled = true;
+      document.getElementById('tap-button').classList.add('disabled');
+      document.getElementById('eliminated-message').style.display = 'block';
+      document.querySelector('.player-container').classList.add('eliminated');
+    }
+  </script>
+</body>
+</html>
