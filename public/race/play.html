@@ -3,57 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cake Race - Play</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Cake Race</title>
   <link rel="stylesheet" href="styles.css">
   <script src="cakes.js"></script>
 </head>
-<body class="player-body">
-  <div class="player-container">
-    <!-- Status Section -->
-    <div class="status-section">
-      <h2 id="cake-name" class="cake-name-display">Connecting...</h2>
-      <div class="status-info">
-        <span id="round-status" class="round-status">Waiting to join...</span>
-      </div>
-    </div>
+<body class="player-screen">
+  <!-- Full screen tap button -->
+  <div id="tap-screen" class="tap-screen" style="display: none;">
+    <div class="tap-cake" id="tap-cake"></div>
+    <div class="tap-prompt">TAP!</div>
+    <div class="tap-ripple" id="tap-ripple"></div>
+  </div>
 
-    <!-- Cake Preview -->
-    <div id="cake-preview" class="cake-preview"></div>
+  <!-- Loading state -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-spinner"></div>
+    <p>Joining race...</p>
+  </div>
 
-    <!-- Tap Button -->
-    <button id="tap-button" class="tap-button" disabled>
-      <span class="tap-text">TAP TO RUN!</span>
-    </button>
+  <!-- Eliminated state -->
+  <div id="eliminated-screen" class="eliminated-screen" style="display: none;">
+    <div class="eliminated-cake" id="eliminated-cake"></div>
+    <h2>Thanks for playing!</h2>
+    <p class="eliminated-message">You've been eliminated</p>
+  </div>
 
-    <!-- Stats Section -->
-    <div class="stats-section">
-      <div class="stat-item">
-        <span class="stat-label">Distance</span>
-        <span class="stat-value" id="distance">0m</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Taps</span>
-        <span class="stat-value" id="taps">0</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Round</span>
-        <span class="stat-value" id="current-round">-</span>
-      </div>
-    </div>
-
-    <!-- Eliminated Message -->
-    <div id="eliminated-message" class="eliminated-message" style="display: none;">
-      <p>😢 You've been eliminated!</p>
-      <p class="sub-message">Thanks for playing!</p>
-    </div>
+  <!-- Winner state -->
+  <div id="winner-screen-player" class="winner-screen-player" style="display: none;">
+    <div class="winner-cake-player" id="winner-cake-player"></div>
+    <h2>🎉 YOU WON! 🎉</h2>
   </div>
 
   <script>
     let playerId = null;
     let cakeData = null;
     let isEliminated = false;
-    let localTaps = 0;
-    let localDistance = 0;
+    let isWinner = false;
+    let canTap = false;
 
     // Join race on load
     window.addEventListener('load', async () => {
@@ -64,121 +52,122 @@
         playerId = data.playerId;
         cakeData = getCakeById(data.cakeId);
 
-        // Update UI
-        document.getElementById('cake-name').textContent = data.cakeName;
-        document.getElementById('current-round').textContent = data.currentRound;
+        // Hide loading
+        document.getElementById('loading-screen').style.display = 'none';
 
-        // Show cake preview
-        if (cakeData) {
-          document.getElementById('cake-preview').innerHTML = generateCakeSVG(cakeData);
-        }
+        // Show tap screen with cake color
+        const tapScreen = document.getElementById('tap-screen');
+        tapScreen.style.background = `linear-gradient(135deg, ${cakeData.bodyColor}, ${cakeData.frostingColor})`;
+        tapScreen.style.display = 'flex';
 
-        // Enable tap button
-        document.getElementById('tap-button').disabled = false;
+        // Show cake
+        document.getElementById('tap-cake').innerHTML = generateCakeSVG(cakeData);
 
-        // Start polling status
-        startStatusPolling();
+        canTap = true;
+
+        // Start polling
+        startPolling();
       } catch (error) {
         console.error('Error joining race:', error);
-        document.getElementById('cake-name').textContent = 'Connection Error';
-        document.getElementById('round-status').textContent = 'Please refresh to try again';
+        document.getElementById('loading-screen').innerHTML = '<p>Connection error. Please refresh.</p>';
       }
     });
 
-    // Handle tap
-    document.getElementById('tap-button').addEventListener('click', async (e) => {
-      if (!playerId || isEliminated) return;
+    // Handle tap (entire screen is tappable)
+    document.addEventListener('click', async (e) => {
+      if (!playerId || !canTap || isEliminated || isWinner) return;
 
       // Visual feedback
-      const button = e.currentTarget;
-      button.classList.add('tapped');
-      setTimeout(() => button.classList.remove('tapped'), 100);
+      createRipple(e.clientX, e.clientY);
 
+      // Animate cake
+      const cakeElement = document.getElementById('tap-cake');
+      cakeElement.classList.add('tapped');
+      setTimeout(() => cakeElement.classList.remove('tapped'), 100);
+
+      // Send tap to server
       try {
-        const response = await fetch('/api/race/tap', {
+        await fetch('/api/race/tap', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ playerId })
         });
-
-        const data = await response.json();
-
-        if (data.success) {
-          localTaps = data.taps;
-          localDistance = data.distance;
-
-          // Update local display immediately
-          document.getElementById('distance').textContent = `${Math.floor(localDistance / 10)}m`;
-          document.getElementById('taps').textContent = localTaps;
-        } else {
-          // Rate limited - show brief indicator
-          if (data.reason === 'rate-limited') {
-            button.classList.add('rate-limited');
-            setTimeout(() => button.classList.remove('rate-limited'), 300);
-          }
-        }
       } catch (error) {
-        console.error('Error processing tap:', error);
+        console.error('Tap error:', error);
       }
     });
 
-    // Poll race status
+    // Create ripple effect
+    function createRipple(x, y) {
+      const ripple = document.createElement('div');
+      ripple.className = 'ripple-effect';
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      document.body.appendChild(ripple);
+
+      setTimeout(() => ripple.remove(), 600);
+    }
+
+    // Poll status
     async function pollStatus() {
       try {
         const response = await fetch('/api/race/status');
         const state = await response.json();
 
+        const player = state.players[playerId];
+        if (!player) return;
+
         // Check if eliminated
-        if (state.players[playerId] && state.players[playerId].eliminated) {
-          if (!isEliminated) {
-            isEliminated = true;
-            showEliminated();
+        if (player.eliminated && !isEliminated) {
+          isEliminated = true;
+          canTap = false;
+          showEliminated();
+        }
+
+        // Check if winner
+        if (state.status === 'complete') {
+          const round4 = state.rounds[4] || state.rounds[state.currentRound];
+          if (round4 && round4.winners && round4.winners[0] === playerId && !isWinner) {
+            isWinner = true;
+            canTap = false;
+            showWinner();
           }
         }
 
-        // Update round status
-        const statusMessages = {
-          'waiting': 'Waiting for round to start...',
-          'racing': `Round ${state.currentRound} - RACE!`,
-          'round-complete': 'Round complete - checking winners...',
-          'complete': 'Race finished!'
-        };
-
-        document.getElementById('round-status').textContent = statusMessages[state.status] || 'Unknown';
-        document.getElementById('current-round').textContent = state.currentRound || '-';
-
-        // Sync distance/taps from server
-        const currentRound = state.rounds[state.currentRound];
-        if (currentRound && currentRound.positions[playerId] !== undefined) {
-          const serverDistance = currentRound.positions[playerId];
-          const serverTaps = currentRound.taps[playerId] || 0;
-
-          // Only update if different (avoid overwriting local optimistic updates)
-          if (Math.abs(serverDistance - localDistance) > 10) {
-            localDistance = serverDistance;
-            document.getElementById('distance').textContent = `${Math.floor(serverDistance / 10)}m`;
-          }
-
-          if (serverTaps !== localTaps) {
-            localTaps = serverTaps;
-            document.getElementById('taps').textContent = serverTaps;
-          }
+        // Enable/disable tapping based on race status
+        if (state.status === 'racing') {
+          canTap = true;
+        } else if (state.status === 'waiting' || state.status === 'round-complete') {
+          canTap = false;
         }
       } catch (error) {
-        console.error('Error polling status:', error);
+        console.error('Poll error:', error);
       }
     }
 
-    function startStatusPolling() {
+    function startPolling() {
       pollStatus();
       setInterval(pollStatus, 1000);
     }
 
     function showEliminated() {
-      document.getElementById('tap-button').disabled = true;
-      document.getElementById('tap-button').classList.add('disabled');
-      document.getElementById('eliminated-message').style.display = 'block';
-      document.querySelector('.player-container').classList.add('eliminated');
+      document.getElementById('tap-screen').style.display = 'none';
+
+      const eliminatedScreen = document.getElementById('eliminated-screen');
+      eliminatedScreen.style.background = `linear-gradient(135deg, ${cakeData.bodyColor}80, ${cakeData.frostingColor}80)`;
+      eliminatedScreen.style.display = 'flex';
+
+      document.getElementById('eliminated-cake').innerHTML = generateCakeSVG(cakeData);
+    }
+
+    function showWinner() {
+      document.getElementById('tap-screen').style.display = 'none';
+
+      const winnerScreen = document.getElementById('winner-screen-player');
+      winnerScreen.style.background = `linear-gradient(135deg, ${cakeData.bodyColor}, ${cakeData.frostingColor})`;
+      winnerScreen.style.display = 'flex';
+
+      document.getElementById('winner-cake-player').innerHTML = generateCakeSVG(cakeData);
     }
   </script>
 </body>
