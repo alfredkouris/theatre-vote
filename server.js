@@ -140,21 +140,25 @@ function calculateWinners(roundNumber) {
     .map(([playerId, distance]) => ({ playerId, distance }))
     .sort((a, b) => b.distance - a.distance);
 
-  // Select top N winners
-  const winnerCount = ROUND_CONFIG[roundNumber].winners;
-  const winners = rankings.slice(0, winnerCount).map(r => r.playerId);
+  // Select top N winners (or all players if fewer than required)
+  const configuredWinners = ROUND_CONFIG[roundNumber].winners;
+  const actualWinners = Math.min(configuredWinners, rankings.length);
+  const winners = rankings.slice(0, actualWinners).map(r => r.playerId);
 
-  // Mark eliminated players
-  rankings.slice(winnerCount).forEach(r => {
-    raceState.players[r.playerId].eliminated = true;
-  });
+  // Mark eliminated players (only if there are more players than winners)
+  if (rankings.length > actualWinners) {
+    rankings.slice(actualWinners).forEach(r => {
+      raceState.players[r.playerId].eliminated = true;
+    });
+  }
 
   return winners;
 }
 
 // Advance to next round
 function advanceToNextRound(winners, currentRound) {
-  if (currentRound === 4) {
+  // If only 1 winner remains or we've completed round 4, game is complete
+  if (currentRound === 4 || winners.length === 1) {
     raceState.status = 'complete';
     return { complete: true, winner: winners[0] };
   }
