@@ -10,6 +10,16 @@
   <script src="cakes.js"></script>
 </head>
 <body class="player-screen">
+  <!-- Preview screen -->
+  <div id="preview-screen" class="preview-screen">
+    <div class="preview-content">
+      <h2 class="preview-title">You are...</h2>
+      <div class="preview-cake" id="preview-cake"></div>
+      <h1 class="preview-name" id="preview-name">Loading...</h1>
+      <button id="join-button" class="join-button">JOIN RACE</button>
+    </div>
+  </div>
+
   <!-- Full screen tap button -->
   <div id="tap-screen" class="tap-screen" style="display: none;">
     <div class="tap-cake" id="tap-cake"></div>
@@ -18,7 +28,7 @@
   </div>
 
   <!-- Loading state -->
-  <div id="loading-screen" class="loading-screen">
+  <div id="loading-screen" class="loading-screen" style="display: none;">
     <div class="loading-spinner"></div>
     <p>Joining race...</p>
   </div>
@@ -43,7 +53,7 @@
     let isWinner = false;
     let canTap = false;
 
-    // Join race on load
+    // Load preview on page load
     window.addEventListener('load', async () => {
       try {
         const response = await fetch('/api/race/join', { method: 'POST' });
@@ -52,25 +62,34 @@
         playerId = data.playerId;
         cakeData = getCakeById(data.cakeId);
 
-        // Hide loading
-        document.getElementById('loading-screen').style.display = 'none';
-
-        // Show tap screen with cake color
-        const tapScreen = document.getElementById('tap-screen');
-        tapScreen.style.background = `linear-gradient(135deg, ${cakeData.bodyColor}, ${cakeData.frostingColor})`;
-        tapScreen.style.display = 'flex';
-
-        // Show cake
-        document.getElementById('tap-cake').innerHTML = generateCakeSVG(cakeData);
-
-        canTap = true;
-
-        // Start polling
-        startPolling();
+        // Show preview screen with cake
+        const previewScreen = document.getElementById('preview-screen');
+        previewScreen.style.background = `linear-gradient(135deg, ${cakeData.bodyColor}, ${cakeData.frostingColor})`;
+        document.getElementById('preview-cake').innerHTML = generateCakeSVG(cakeData);
+        document.getElementById('preview-name').textContent = data.cakeName;
       } catch (error) {
-        console.error('Error joining race:', error);
-        document.getElementById('loading-screen').innerHTML = '<p>Connection error. Please refresh.</p>';
+        console.error('Error loading preview:', error);
+        document.getElementById('preview-name').textContent = 'Connection error. Please refresh.';
       }
+    });
+
+    // Join race when button clicked
+    document.getElementById('join-button').addEventListener('click', () => {
+      // Hide preview
+      document.getElementById('preview-screen').style.display = 'none';
+
+      // Show tap screen with cake color
+      const tapScreen = document.getElementById('tap-screen');
+      tapScreen.style.background = `linear-gradient(135deg, ${cakeData.bodyColor}, ${cakeData.frostingColor})`;
+      tapScreen.style.display = 'flex';
+
+      // Show cake
+      document.getElementById('tap-cake').innerHTML = generateCakeSVG(cakeData);
+
+      canTap = true;
+
+      // Start polling
+      startPolling();
     });
 
     // Handle tap (entire screen is tappable)

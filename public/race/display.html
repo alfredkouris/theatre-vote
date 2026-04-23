@@ -149,9 +149,8 @@
         lane.innerHTML = `
           <div class="lane-bg"></div>
           <div class="lane-position">#${index + 1}</div>
-          <div class="racer" style="left: ${progressPercent}%;">
+          <div class="racer" style="transform: translateX(calc(${progressPercent}vw - 100px));">
             ${generateCakeSVG(cake)}
-            <div class="speedlines"></div>
           </div>
           <div class="lane-nameplate">
             <span class="racer-name">${player.name}</span>
