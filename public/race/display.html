@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cake Race</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="cakes.js"></script>
@@ -16,13 +19,17 @@
         <span class="round-label">ROUND</span>
         <span class="round-number" id="round-num">-</span>
       </div>
-      <div class="timer-badge" id="timer-badge">
-        <span class="timer-value" id="timer">--</span>
-      </div>
     </div>
 
     <div class="hud-center">
-      <h1 class="game-title">CAKE RACE</h1>
+      <div class="timer-container">
+        <div class="scoreboard-timer" id="timer-badge">
+          <div class="timer-display">
+            <span class="timer-value" id="timer">30</span>
+          </div>
+        </div>
+        <div class="timer-status" id="timer-status">WAITING FOR PLAYERS</div>
+      </div>
     </div>
 
     <div class="hud-right">
@@ -81,11 +88,14 @@
 
       // Update timer
       const timerBadge = document.getElementById('timer-badge');
+      const timerStatus = document.getElementById('timer-status');
+
       if (state.status === 'racing' && state.rounds[state.currentRound]) {
         const round = state.rounds[state.currentRound];
         const elapsed = Date.now() - round.startTime;
         const remaining = Math.max(0, 30 - Math.floor(elapsed / 1000));
         document.getElementById('timer').textContent = remaining;
+        timerStatus.style.display = 'none';
 
         // Warning color when time running out
         if (remaining <= 5) {
@@ -95,9 +105,11 @@
         }
       } else if (state.status === 'complete') {
         document.getElementById('timer').textContent = '0';
+        timerStatus.style.display = 'none';
         showWinner(state);
       } else {
-        document.getElementById('timer').textContent = '--';
+        document.getElementById('timer').textContent = '30';
+        timerStatus.style.display = 'block';
         timerBadge.classList.remove('warning');
       }
 
@@ -108,6 +120,42 @@
     function updateTrack(state) {
       const trackContainer = document.getElementById('track-container');
       const currentRound = state.rounds[state.currentRound];
+
+      // Show free-roaming cakes when waiting
+      if (state.status === 'waiting') {
+        const players = Object.values(state.players);
+
+        if (players.length === 0) {
+          trackContainer.innerHTML = '<div class="waiting-state">WAITING FOR PLAYERS...</div>';
+          return;
+        }
+
+        trackContainer.innerHTML = '';
+        trackContainer.className = 'track-container free-roam';
+
+        players.forEach((player, index) => {
+          const cake = getCakeById(player.cakeId);
+
+          // Random position and animation
+          const x = Math.random() * 80 + 10; // 10-90% width
+          const y = Math.random() * 70 + 15; // 15-85% height
+          const delay = Math.random() * 5;
+
+          const cakeElement = document.createElement('div');
+          cakeElement.className = 'roaming-cake';
+          cakeElement.style.left = x + '%';
+          cakeElement.style.top = y + '%';
+          cakeElement.style.animationDelay = delay + 's';
+          cakeElement.innerHTML = generateCakeSVG(cake);
+
+          trackContainer.appendChild(cakeElement);
+        });
+
+        return;
+      }
+
+      // Racing mode - show lanes
+      trackContainer.className = 'track-container';
 
       if (!currentRound || !currentRound.participants || currentRound.participants.length === 0) {
         trackContainer.innerHTML = '<div class="waiting-state">WAITING FOR PLAYERS...</div>';
