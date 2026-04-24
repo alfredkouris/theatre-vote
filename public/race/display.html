@@ -123,7 +123,8 @@
 
       // Show free-roaming cakes when waiting
       if (state.status === 'waiting') {
-        const players = Object.values(state.players);
+        // Only show visible players (those who clicked JOIN)
+        const players = Object.values(state.players).filter(p => p.visible);
 
         if (players.length === 0) {
           trackContainer.innerHTML = '<div class="waiting-state">WAITING FOR PLAYERS...</div>';
@@ -136,15 +137,13 @@
         players.forEach((player, index) => {
           const cake = getCakeById(player.cakeId);
 
-          // Random position and animation
-          const x = Math.random() * 80 + 10; // 10-90% width
-          const y = Math.random() * 70 + 15; // 15-85% height
-          const delay = Math.random() * 5;
+          // Wii-style walking animation - horizontal movement with bobbing
+          const startX = -10; // Start off-screen left
+          const delay = index * 0.5; // Stagger entries
 
           const cakeElement = document.createElement('div');
           cakeElement.className = 'roaming-cake';
-          cakeElement.style.left = x + '%';
-          cakeElement.style.top = y + '%';
+          cakeElement.setAttribute('data-player-id', player.id);
           cakeElement.style.animationDelay = delay + 's';
           cakeElement.innerHTML = generateCakeSVG(cake);
 

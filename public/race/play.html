@@ -82,7 +82,18 @@
     });
 
     // Join race when button clicked
-    document.getElementById('join-button').addEventListener('click', () => {
+    document.getElementById('join-button').addEventListener('click', async () => {
+      // Activate player (make visible on display)
+      try {
+        await fetch('/api/race/activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playerId })
+        });
+      } catch (error) {
+        console.error('Error activating player:', error);
+      }
+
       // Hide preview
       document.getElementById('preview-screen').style.display = 'none';
 

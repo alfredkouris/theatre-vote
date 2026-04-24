@@ -70,15 +70,66 @@
     </div>
   </div>
 
+  <!-- Custom Alert/Toast System -->
+  <div id="custom-toast" class="custom-toast"></div>
+  <div id="custom-modal" class="custom-modal" style="display: none;">
+    <div class="modal-content">
+      <h3 id="modal-title"></h3>
+      <p id="modal-message"></p>
+      <div class="modal-buttons">
+        <button id="modal-cancel" class="btn-modal btn-cancel">Cancel</button>
+        <button id="modal-confirm" class="btn-modal btn-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let adminPassword = null;
     let raceState = null;
+
+    // Custom Toast System
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('custom-toast');
+      toast.textContent = message;
+      toast.className = `custom-toast ${type} show`;
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // Custom Modal System
+    function showModal(title, message, onConfirm) {
+      const modal = document.getElementById('custom-modal');
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-message').textContent = message;
+
+      modal.style.display = 'flex';
+
+      const confirmBtn = document.getElementById('modal-confirm');
+      const cancelBtn = document.getElementById('modal-cancel');
+
+      const newConfirmBtn = confirmBtn.cloneNode(true);
+      const newCancelBtn = cancelBtn.cloneNode(true);
+
+      confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+      cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+      newConfirmBtn.onclick = () => {
+        modal.style.display = 'none';
+        onConfirm();
+      };
+
+      newCancelBtn.onclick = () => {
+        modal.style.display = 'none';
+      };
+    }
 
     function login() {
       adminPassword = document.getElementById('password').value;
 
       if (!adminPassword) {
-        alert('Please enter a password');
+        showToast('Please enter a password', 'error');
         return;
       }
 
@@ -91,8 +142,6 @@
     }
 
     async function startRound() {
-      if (!confirm('Start the current round?')) return;
-
       try {
         const response = await fetch('/api/race/admin/start', {
           method: 'POST',
@@ -103,65 +152,65 @@
         const data = await response.json();
 
         if (data.success) {
-          alert(`Round ${data.round} started!`);
+          showToast(`Round ${data.round} started!`, 'success');
         } else {
-          alert(`Error: ${data.error}`);
+          showToast(`Error: ${data.error}`, 'error');
         }
       } catch (error) {
-        alert('Failed to start round');
+        showToast('Failed to start round', 'error');
         console.error(error);
       }
     }
 
     async function stopRound() {
-      if (!confirm('Stop the current round and advance winners?')) return;
+      showModal('Stop Round', 'Stop the current round and advance winners?', async () => {
+        try {
+          const response = await fetch('/api/race/admin/stop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: adminPassword })
+          });
 
-      try {
-        const response = await fetch('/api/race/admin/stop', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: adminPassword })
-        });
+          const data = await response.json();
 
-        const data = await response.json();
-
-        if (data.success) {
-          if (data.complete) {
-            const winner = raceState.players[data.winner];
-            alert(`🎉 WINNER: ${winner.name}!`);
+          if (data.success) {
+            if (data.complete) {
+              const winner = raceState.players[data.winner];
+              showToast(`🎉 WINNER: ${winner.name}!`, 'success');
+            } else {
+              showToast(`Round complete! ${data.winners.length} players advance to Round ${data.nextRound}`, 'success');
+            }
           } else {
-            alert(`Round complete! ${data.winners.length} players advance to Round ${data.nextRound}`);
+            showToast(`Error: ${data.error}`, 'error');
           }
-        } else {
-          alert(`Error: ${data.error}`);
+        } catch (error) {
+          showToast('Failed to stop round', 'error');
+          console.error(error);
         }
-      } catch (error) {
-        alert('Failed to stop round');
-        console.error(error);
-      }
+      });
     }
 
     async function resetGame() {
-      if (!confirm('⚠️ Reset the entire game? This will clear all players and rounds!')) return;
+      showModal('⚠️ Reset Game', 'Reset the entire game? This will clear all players and rounds!', async () => {
+        try {
+          const response = await fetch('/api/race/admin/reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: adminPassword })
+          });
 
-      try {
-        const response = await fetch('/api/race/admin/reset', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: adminPassword })
-        });
+          const data = await response.json();
 
-        const data = await response.json();
-
-        if (data.success) {
-          alert('Game reset successfully!');
-        } else {
-          alert(`Error: ${data.error}`);
+          if (data.success) {
+            showToast('Game reset successfully!', 'success');
+          } else {
+            showToast(`Error: ${data.error}`, 'error');
+          }
+        } catch (error) {
+          showToast('Failed to reset game', 'error');
+          console.error(error);
         }
-      } catch (error) {
-        alert('Failed to reset game');
-        console.error(error);
-      }
+      });
     }
 
     function updateDisplay(state) {

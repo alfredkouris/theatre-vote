@@ -217,14 +217,15 @@ app.post('/api/race/join', (req, res) => {
 
   const cakeName = cakeNames[cakeId - 1] || `Cake ${cakeId}`;
 
-  // Create player
+  // Create player (not visible until they click JOIN)
   raceState.players[playerId] = {
     id: playerId,
     name: cakeName,
     cakeId: cakeId,
     joinedAt: Date.now(),
     currentRound: raceState.currentRound || 1,
-    eliminated: false
+    eliminated: false,
+    visible: false  // Only visible after clicking JOIN RACE button
   };
 
   // Add to current round (or round 1 if waiting)
@@ -253,6 +254,25 @@ app.post('/api/race/join', (req, res) => {
     cakeName,
     currentRound: raceState.currentRound || 1
   });
+});
+
+// Activate player (make visible on display)
+app.post('/api/race/activate', (req, res) => {
+  const { playerId } = req.body;
+
+  if (!playerId) {
+    return res.status(400).json({ success: false, error: 'Missing playerId' });
+  }
+
+  const player = raceState.players[playerId];
+  if (!player) {
+    return res.status(404).json({ success: false, error: 'Player not found' });
+  }
+
+  // Make player visible
+  player.visible = true;
+
+  res.json({ success: true });
 });
 
 // Process tap
