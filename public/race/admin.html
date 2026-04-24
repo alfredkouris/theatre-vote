@@ -226,7 +226,7 @@
 
       // Update player counts
       const totalPlayers = Object.keys(state.players).length;
-      const activePlayers = Object.values(state.players).filter(p => !p.eliminated).length;
+      const activePlayers = Object.values(state.players).filter(p => p.visible && !p.eliminated).length;
       document.getElementById('player-count').textContent = totalPlayers;
       document.getElementById('active-count').textContent = activePlayers;
 
@@ -272,7 +272,14 @@
         const taps = currentRound ? (currentRound.taps[player.id] || 0) : 0;
         const meters = Math.floor(distance / 10);
 
-        const statusClass = player.eliminated ? 'eliminated' : 'active';
+        const statusClass = player.eliminated ? 'eliminated' : player.visible ? 'active' : 'pending';
+        const statusText = player.eliminated
+          ? '❌ Eliminated'
+          : !player.visible
+            ? '⏳ Reserved'
+            : state.status === 'racing' && player.currentRound === state.currentRound
+              ? '🏁 Racing'
+              : '✅ Ready';
 
         return `
           <div class="player-item ${statusClass}">
@@ -281,7 +288,7 @@
               ${meters}m | ${taps} taps
             </span>
             <span class="player-status">
-              ${player.eliminated ? '❌ Eliminated' : '✅ Active'}
+              ${statusText}
             </span>
           </div>
         `;

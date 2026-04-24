@@ -24,6 +24,7 @@
       <h2 class="preview-title">You are...</h2>
       <div class="preview-cake" id="preview-cake"></div>
       <h1 class="preview-name" id="preview-name">Loading...</h1>
+      <p class="preview-message" id="preview-message">Hold or tap to build speed once the round starts.</p>
       <button id="join-button" class="join-button">JOIN RACE</button>
     </div>
   </div>
@@ -31,8 +32,13 @@
   <!-- Full screen tap button -->
   <div id="tap-screen" class="tap-screen" style="display: none;">
     <div class="tap-cake" id="tap-cake"></div>
-    <div class="tap-prompt">TAP!</div>
-    <div class="tap-ripple" id="tap-ripple"></div>
+    <div class="tap-prompt" id="tap-prompt">BOOST</div>
+    <div class="tap-hud">
+      <div class="boost-meter">
+        <div class="boost-meter-fill" id="boost-meter-fill"></div>
+      </div>
+      <p class="tap-instructions" id="tap-instructions">Hold or tap to build speed</p>
+    </div>
   </div>
 
   <!-- Loading state -->
@@ -53,160 +59,6 @@
     <div class="winner-cake-player" id="winner-cake-player"></div>
     <h2>🎉 YOU WON! 🎉</h2>
   </div>
-
-  <script>
-    let playerId = null;
-    let cakeData = null;
-    let isEliminated = false;
-    let isWinner = false;
-    let canTap = false;
-
-    // Load preview on page load
-    window.addEventListener('load', async () => {
-      try {
-        const response = await fetch('/api/race/join', { method: 'POST' });
-        const data = await response.json();
-
-        playerId = data.playerId;
-        cakeData = getCakeById(data.cakeId);
-
-        // Show preview screen with cake
-        const previewScreen = document.getElementById('preview-screen');
-        previewScreen.style.background = `linear-gradient(135deg, ${cakeData.bodyColor}, ${cakeData.frostingColor})`;
-        document.getElementById('preview-cake').innerHTML = generateCakeSVG(cakeData);
-        document.getElementById('preview-name').textContent = data.cakeName;
-      } catch (error) {
-        console.error('Error loading preview:', error);
-        document.getElementById('preview-name').textContent = 'Connection error. Please refresh.';
-      }
-    });
-
-    // Join race when button clicked
-    document.getElementById('join-button').addEventListener('click', async () => {
-      // Activate player (make visible on display)
-      try {
-        await fetch('/api/race/activate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ playerId })
-        });
-      } catch (error) {
-        console.error('Error activating player:', error);
-      }
-
-      // Hide preview
-      document.getElementById('preview-screen').style.display = 'none';
-
-      // Show tap screen with cake color
-      const tapScreen = document.getElementById('tap-screen');
-      tapScreen.style.background = `linear-gradient(135deg, ${cakeData.bodyColor}, ${cakeData.frostingColor})`;
-      tapScreen.style.display = 'flex';
-
-      // Show cake
-      document.getElementById('tap-cake').innerHTML = generateCakeSVG(cakeData);
-
-      canTap = true;
-
-      // Start polling
-      startPolling();
-    });
-
-    // Handle tap (entire screen is tappable)
-    document.addEventListener('click', async (e) => {
-      if (!playerId || !canTap || isEliminated || isWinner) return;
-
-      // Visual feedback
-      createRipple(e.clientX, e.clientY);
-
-      // Animate cake
-      const cakeElement = document.getElementById('tap-cake');
-      cakeElement.classList.add('tapped');
-      setTimeout(() => cakeElement.classList.remove('tapped'), 100);
-
-      // Send tap to server
-      try {
-        await fetch('/api/race/tap', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ playerId })
-        });
-      } catch (error) {
-        console.error('Tap error:', error);
-      }
-    });
-
-    // Create ripple effect
-    function createRipple(x, y) {
-      const ripple = document.createElement('div');
-      ripple.className = 'ripple-effect';
-      ripple.style.left = x + 'px';
-      ripple.style.top = y + 'px';
-      document.body.appendChild(ripple);
-
-      setTimeout(() => ripple.remove(), 600);
-    }
-
-    // Poll status
-    async function pollStatus() {
-      try {
-        const response = await fetch('/api/race/status');
-        const state = await response.json();
-
-        const player = state.players[playerId];
-        if (!player) return;
-
-        // Check if eliminated
-        if (player.eliminated && !isEliminated) {
-          isEliminated = true;
-          canTap = false;
-          showEliminated();
-        }
-
-        // Check if winner
-        if (state.status === 'complete') {
-          const round4 = state.rounds[4] || state.rounds[state.currentRound];
-          if (round4 && round4.winners && round4.winners[0] === playerId && !isWinner) {
-            isWinner = true;
-            canTap = false;
-            showWinner();
-          }
-        }
-
-        // Enable/disable tapping based on race status
-        if (state.status === 'racing') {
-          canTap = true;
-        } else if (state.status === 'waiting' || state.status === 'round-complete') {
-          canTap = false;
-        }
-      } catch (error) {
-        console.error('Poll error:', error);
-      }
-    }
-
-    function startPolling() {
-      pollStatus();
-      setInterval(pollStatus, 1000);
-    }
-
-    function showEliminated() {
-      document.getElementById('tap-screen').style.display = 'none';
-
-      const eliminatedScreen = document.getElementById('eliminated-screen');
-      eliminatedScreen.style.background = `linear-gradient(135deg, ${cakeData.bodyColor}80, ${cakeData.frostingColor}80)`;
-      eliminatedScreen.style.display = 'flex';
-
-      document.getElementById('eliminated-cake').innerHTML = generateCakeSVG(cakeData);
-    }
-
-    function showWinner() {
-      document.getElementById('tap-screen').style.display = 'none';
-
-      const winnerScreen = document.getElementById('winner-screen-player');
-      winnerScreen.style.background = `linear-gradient(135deg, ${cakeData.bodyColor}, ${cakeData.frostingColor})`;
-      winnerScreen.style.display = 'flex';
-
-      document.getElementById('winner-cake-player').innerHTML = generateCakeSVG(cakeData);
-    }
-  </script>
+  <script src="play.js"></script>
 </body>
 </html>
