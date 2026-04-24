@@ -141,6 +141,13 @@
       startPolling();
     }
 
+    document.getElementById('password').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        login();
+      }
+    });
+
     async function startRound() {
       try {
         const response = await fetch('/api/race/admin/start', {

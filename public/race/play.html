@@ -2,12 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <style>
     * {
       touch-action: manipulation;
+    }
+
+    html, body {
+      overscroll-behavior: none;
     }
   </style>
   <title>Cake Race</title>
@@ -21,10 +25,10 @@
   <!-- Preview screen -->
   <div id="preview-screen" class="preview-screen">
     <div class="preview-content">
-      <h2 class="preview-title">You are...</h2>
+      <h2 class="preview-title">Your Cake</h2>
       <div class="preview-cake" id="preview-cake"></div>
       <h1 class="preview-name" id="preview-name">Loading...</h1>
-      <p class="preview-message" id="preview-message">Hold or tap to build speed once the round starts.</p>
+      <p class="preview-message" id="preview-message">Tap when the round starts.</p>
       <button id="join-button" class="join-button">JOIN RACE</button>
     </div>
   </div>
@@ -32,13 +36,8 @@
   <!-- Full screen tap button -->
   <div id="tap-screen" class="tap-screen" style="display: none;">
     <div class="tap-cake" id="tap-cake"></div>
-    <div class="tap-prompt" id="tap-prompt">BOOST</div>
-    <div class="tap-hud">
-      <div class="boost-meter">
-        <div class="boost-meter-fill" id="boost-meter-fill"></div>
-      </div>
-      <p class="tap-instructions" id="tap-instructions">Hold or tap to build speed</p>
-    </div>
+    <div class="tap-prompt" id="tap-prompt">TAP</div>
+    <p class="tap-instructions" id="tap-instructions">Tap fast to race</p>
   </div>
 
   <!-- Loading state -->

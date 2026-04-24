@@ -1,5 +1,4 @@
 const DEVICE_STORAGE_KEY = 'cake-race-device-id';
-const HOLD_INTERVAL_MS = 90;
 const PLAYER_POLL_MS = {
   waiting: 500,
   racing: 220,
@@ -16,7 +15,6 @@ const refs = {
   tapCake: document.getElementById('tap-cake'),
   tapPrompt: document.getElementById('tap-prompt'),
   tapInstructions: document.getElementById('tap-instructions'),
-  boostMeterFill: document.getElementById('boost-meter-fill'),
   loadingScreen: document.getElementById('loading-screen'),
   loadingText: document.querySelector('#loading-screen p'),
   eliminatedScreen: document.getElementById('eliminated-screen'),
@@ -35,13 +33,9 @@ const playerState = {
   isEliminated: false,
   isWinner: false,
   currentScreen: 'loading',
-  holdInterval: null,
-  holdPoint: null,
   tapResetTimer: null,
   pollTimer: null,
   polling: false,
-  fxLastFrame: performance.now(),
-  momentum: 0,
   lastRippleAt: 0
 };
 
@@ -70,6 +64,28 @@ function getOrCreateDeviceId() {
   return deviceId;
 }
 
+function installTouchGuards() {
+  let lastTouchEnd = 0;
+
+  document.addEventListener('touchend', (event) => {
+    const now = Date.now();
+
+    if (now - lastTouchEnd < 320) {
+      event.preventDefault();
+    }
+
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  document.addEventListener('gesturestart', (event) => {
+    event.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('dblclick', (event) => {
+    event.preventDefault();
+  }, { passive: false });
+}
+
 function setScreen(screen) {
   refs.previewScreen.style.display = screen === 'preview' ? 'flex' : 'none';
   refs.tapScreen.style.display = screen === 'tap' ? 'flex' : 'none';
@@ -86,13 +102,14 @@ function applyCakeTheme() {
 
   const { bodyColor, frostingColor } = playerState.cakeData;
   const gradient = `linear-gradient(135deg, ${bodyColor}, ${frostingColor})`;
+  const mutedGradient = `linear-gradient(135deg, ${bodyColor}80, ${frostingColor}80)`;
+  const svg = generateCakeSVG(playerState.cakeData);
 
   refs.previewScreen.style.background = gradient;
   refs.tapScreen.style.background = gradient;
   refs.winnerScreen.style.background = gradient;
-  refs.eliminatedScreen.style.background = `linear-gradient(135deg, ${bodyColor}80, ${frostingColor}80)`;
+  refs.eliminatedScreen.style.background = mutedGradient;
 
-  const svg = generateCakeSVG(playerState.cakeData);
   refs.previewCake.innerHTML = svg;
   refs.tapCake.innerHTML = svg;
   refs.eliminatedCake.innerHTML = svg;
@@ -107,7 +124,6 @@ function showLoading(message = 'Joining race...') {
 
 function showPreview(message, allowJoin = true) {
   playerState.canTap = false;
-  stopBoosting();
 
   if (message) {
     refs.previewMessage.textContent = message;
@@ -123,20 +139,18 @@ function showTapScreen() {
 }
 
 function showEliminated() {
-  stopBoosting();
   playerState.canTap = false;
   setScreen('eliminated');
 }
 
 function showWinner() {
-  stopBoosting();
   playerState.canTap = false;
   setScreen('winner');
 }
 
 function updateTapCopy() {
   if (playerState.isWinner) {
-    refs.tapPrompt.textContent = 'WINNER';
+    refs.tapPrompt.textContent = 'WIN';
     refs.tapInstructions.textContent = 'You took the cake.';
     return;
   }
@@ -148,8 +162,8 @@ function updateTapCopy() {
   }
 
   if (playerState.canTap) {
-    refs.tapPrompt.textContent = 'BOOST';
-    refs.tapInstructions.textContent = 'Hold or tap to build speed';
+    refs.tapPrompt.textContent = 'TAP';
+    refs.tapInstructions.textContent = 'Tap fast to race';
     return;
   }
 
@@ -166,14 +180,14 @@ function updateTapCopy() {
   }
 
   refs.tapPrompt.textContent = 'READY';
-  refs.tapInstructions.textContent = 'Wait for the next round to start';
+  refs.tapInstructions.textContent = 'Wait for the round to start';
 }
 
 function setPreviewCopy(data) {
   refs.previewName.textContent = data.cakeName || 'Cake ready';
   refs.previewMessage.textContent = data.canActivate
-    ? 'Hold or tap to build speed once the round starts.'
-    : 'This round already started. Reuse the original device or wait for the next reset.';
+    ? 'Tap when the round starts.'
+    : 'This round already started on another device.';
 }
 
 function hydratePlayer(data) {
@@ -275,7 +289,7 @@ function pulseCake() {
 
 function createRipple(clientX, clientY) {
   const now = performance.now();
-  if (now - playerState.lastRippleAt < 160) {
+  if (now - playerState.lastRippleAt < 120) {
     return;
   }
 
@@ -291,17 +305,13 @@ function createRipple(clientX, clientY) {
   window.setTimeout(() => ripple.remove(), 900);
 }
 
-function sendTap(clientX, clientY, showVisuals = true) {
+function sendTap(clientX, clientY) {
   if (!playerState.playerId || !playerState.canTap || playerState.isEliminated || playerState.isWinner) {
     return;
   }
 
-  if (showVisuals) {
-    createRipple(clientX, clientY);
-  }
-
+  createRipple(clientX, clientY);
   pulseCake();
-  playerState.momentum = Math.min(1, playerState.momentum + 0.16);
 
   fetch('/api/race/tap', {
     method: 'POST',
@@ -312,46 +322,26 @@ function sendTap(clientX, clientY, showVisuals = true) {
   });
 }
 
-function stopBoosting() {
-  refs.tapCake.classList.remove('boosting');
-  playerState.holdPoint = null;
-
-  if (playerState.holdInterval) {
-    window.clearInterval(playerState.holdInterval);
-    playerState.holdInterval = null;
+function getEventPoint(event) {
+  if (typeof event.clientX === 'number' && typeof event.clientY === 'number') {
+    return { x: event.clientX, y: event.clientY };
   }
+
+  const bounds = refs.tapScreen.getBoundingClientRect();
+  return {
+    x: bounds.left + bounds.width / 2,
+    y: bounds.top + bounds.height / 2
+  };
 }
 
-function startBoosting(event) {
+function handleTap(event) {
   if (!playerState.canTap) {
     return;
   }
 
   event.preventDefault();
-
-  playerState.holdPoint = { x: event.clientX, y: event.clientY };
-  refs.tapCake.classList.add('boosting');
-  sendTap(event.clientX, event.clientY, true);
-
-  if (playerState.holdInterval) {
-    window.clearInterval(playerState.holdInterval);
-  }
-
-  playerState.holdInterval = window.setInterval(() => {
-    if (!playerState.holdPoint) {
-      return;
-    }
-
-    sendTap(playerState.holdPoint.x, playerState.holdPoint.y, false);
-  }, HOLD_INTERVAL_MS);
-}
-
-function updateHoldPoint(event) {
-  if (!playerState.holdPoint) {
-    return;
-  }
-
-  playerState.holdPoint = { x: event.clientX, y: event.clientY };
+  const point = getEventPoint(event);
+  sendTap(point.x, point.y);
 }
 
 async function pollStatus() {
@@ -405,10 +395,6 @@ async function pollStatus() {
       player.currentRound === state.currentRound
     );
 
-    if (!playerState.canTap) {
-      stopBoosting();
-    }
-
     updateTapCopy();
   } catch (error) {
     console.error('Poll error:', error);
@@ -424,27 +410,13 @@ async function pollStatus() {
   }
 }
 
-function animateFx(now) {
-  const dt = Math.min(0.05, (now - playerState.fxLastFrame) / 1000);
-  playerState.fxLastFrame = now;
-
-  const decayRate = playerState.canTap ? 0.95 : 1.8;
-  playerState.momentum = Math.max(0, playerState.momentum - decayRate * dt);
-  refs.boostMeterFill.style.transform = `scaleX(${playerState.momentum.toFixed(3)})`;
-
-  window.requestAnimationFrame(animateFx);
-}
-
 window.addEventListener('load', () => {
+  installTouchGuards();
   playerState.deviceId = getOrCreateDeviceId();
 
   refs.joinButton.addEventListener('click', activatePlayer);
-  refs.tapScreen.addEventListener('pointerdown', startBoosting);
-  refs.tapScreen.addEventListener('pointermove', updateHoldPoint);
-  window.addEventListener('pointerup', stopBoosting);
-  window.addEventListener('pointercancel', stopBoosting);
+  refs.tapScreen.addEventListener('pointerdown', handleTap);
 
   showLoading('Joining race...');
-  window.requestAnimationFrame(animateFx);
   loadPlayer();
 });

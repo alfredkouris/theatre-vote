@@ -25,25 +25,27 @@
       <div class="timer-container">
         <div class="scoreboard-timer" id="timer-badge">
           <div class="timer-display">
-            <span class="timer-value" id="timer">30</span>
+            <span class="timer-value" id="timer">00:30</span>
           </div>
         </div>
         <div class="timer-status" id="timer-status">WAITING FOR PLAYERS</div>
       </div>
     </div>
 
-    <div class="hud-right">
-      <div class="qr-badge">
-        <div id="qrcode"></div>
-        <span class="qr-text">SCAN TO JOIN</span>
-      </div>
-    </div>
+    <div class="hud-right"></div>
   </div>
 
   <!-- Racing Track -->
   <div class="racing-track">
     <div class="track-container" id="track-container">
       <div class="waiting-state" id="waiting-state">WAITING FOR PLAYERS...</div>
+      <div class="lobby-hold" id="lobby-hold">
+        <div class="lobby-qr-badge">
+          <div id="qrcode"></div>
+          <span class="lobby-qr-label">SCAN TO JOIN</span>
+          <span class="lobby-qr-detail">Open the race page on your phone and tap join.</span>
+        </div>
+      </div>
       <div class="lobby-layer" id="lobby-layer" aria-hidden="true"></div>
       <div class="race-layer" id="race-layer" aria-hidden="true"></div>
       <div class="more-racers" id="more-racers" hidden></div>
@@ -65,7 +67,7 @@
     <div class="winner-content">
       <h2 class="winner-title">WINNER!</h2>
       <div id="winner-cake" class="winner-cake"></div>
-      <p id="winner-name" class="winner-name"></p>
+      <p id="winner-name" class="winner-name" hidden></p>
     </div>
   </div>
   <script src="display.js"></script>

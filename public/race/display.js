@@ -4,6 +4,9 @@ const DISPLAY_POLL_MS = {
   complete: 600
 };
 
+const ROUND_DURATION_SECONDS = 30;
+const DISPLAY_TRACK_LENGTH = 14000;
+
 const refs = {
   roundNum: document.getElementById('round-num'),
   timer: document.getElementById('timer'),
@@ -11,12 +14,13 @@ const refs = {
   timerStatus: document.getElementById('timer-status'),
   trackContainer: document.getElementById('track-container'),
   waitingState: document.getElementById('waiting-state'),
+  lobbyHold: document.getElementById('lobby-hold'),
   lobbyLayer: document.getElementById('lobby-layer'),
   raceLayer: document.getElementById('race-layer'),
   moreRacers: document.getElementById('more-racers'),
+  finishLine: document.querySelector('.finish-line-area'),
   winnerScreen: document.getElementById('winner-screen'),
-  winnerCake: document.getElementById('winner-cake'),
-  winnerName: document.getElementById('winner-name')
+  winnerCake: document.getElementById('winner-cake')
 };
 
 const runtime = {
@@ -51,6 +55,13 @@ function mulberry32(seed) {
     next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
     return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+function formatTimer(totalSeconds) {
+  const seconds = Math.max(0, totalSeconds);
+  const minutesPart = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const secondsPart = (seconds % 60).toString().padStart(2, '0');
+  return `${minutesPart}:${secondsPart}`;
 }
 
 function getLobbyPlayers(state) {
@@ -93,27 +104,36 @@ function clearRaceSprites() {
 }
 
 function createLobbySprite(player) {
-  const seed = hashString(player.id);
-  const random = mulberry32(seed);
+  const random = mulberry32(hashString(player.id));
   const spriteEl = document.createElement('div');
   spriteEl.className = 'roaming-cake';
   spriteEl.dataset.playerId = player.id;
   spriteEl.innerHTML = generateCakeSVG(getCakeById(player.cakeId));
   refs.lobbyLayer.appendChild(spriteEl);
 
-  const maxX = Math.max(40, refs.lobbyLayer.clientWidth - 110);
-  const maxY = Math.max(40, refs.lobbyLayer.clientHeight - 110);
-
   return {
     playerId: player.id,
     el: spriteEl,
-    random,
-    x: random() * maxX,
-    y: random() * maxY,
-    vx: (random() > 0.5 ? 1 : -1) * (55 + random() * 45),
-    vy: (random() > 0.5 ? 1 : -1) * (18 + random() * 26),
-    bobPhase: random() * Math.PI * 2,
-    wanderTimer: 0.9 + random() * 2.2
+    angle: random() * Math.PI * 2,
+    angularVelocity: (random() > 0.5 ? 1 : -1) * (0.28 + random() * 0.22),
+    baseRadius: 240 + random() * 120,
+    radiusWave: 18 + random() * 28,
+    radiusSpeed: 0.65 + random() * 0.45,
+    verticalScale: 0.62 + random() * 0.12,
+    bobPhase: random() * Math.PI * 2
+  };
+}
+
+function getLobbyGeometry() {
+  const layerRect = refs.lobbyLayer.getBoundingClientRect();
+  const holdRect = refs.lobbyHold.getBoundingClientRect();
+
+  return {
+    width: refs.lobbyLayer.clientWidth,
+    height: refs.lobbyLayer.clientHeight,
+    centerX: holdRect.left - layerRect.left + holdRect.width / 2,
+    centerY: holdRect.top - layerRect.top + holdRect.height / 2,
+    keepOutRadius: Math.max(190, holdRect.width * 0.55)
   };
 }
 
@@ -122,9 +142,12 @@ function syncLobby(state) {
   const desiredIds = new Set(players.map((player) => player.id));
 
   refs.trackContainer.classList.add('free-roam');
+  refs.lobbyHold.hidden = false;
+  refs.finishLine.hidden = true;
   refs.lobbyLayer.hidden = players.length === 0;
   refs.raceLayer.hidden = true;
   refs.moreRacers.hidden = true;
+  hidePlaceholder();
 
   runtime.lobbySprites.forEach((sprite, playerId) => {
     if (!desiredIds.has(playerId)) {
@@ -138,12 +161,6 @@ function syncLobby(state) {
       runtime.lobbySprites.set(player.id, createLobbySprite(player));
     }
   });
-
-  if (players.length === 0) {
-    setPlaceholder('WAITING FOR PLAYERS...');
-  } else {
-    hidePlaceholder();
-  }
 }
 
 function createRaceSprite(entry) {
@@ -156,9 +173,6 @@ function createRaceSprite(entry) {
       <div class="lane-bg"></div>
       <div class="racer">${generateCakeSVG(getCakeById(entry.player.cakeId))}</div>
     </div>
-    <div class="lane-nameplate">
-      <span class="racer-name"></span>
-    </div>
   `;
 
   refs.raceLayer.appendChild(lane);
@@ -169,7 +183,6 @@ function createRaceSprite(entry) {
     positionLabel: lane.querySelector('.lane-position'),
     runway: lane.querySelector('.lane-runway'),
     racer: lane.querySelector('.racer'),
-    nameEl: lane.querySelector('.racer-name'),
     localPosition: entry.distance,
     serverPosition: entry.distance,
     serverVelocity: entry.velocity,
@@ -182,6 +195,8 @@ function syncRace(state) {
   const round = state.rounds[state.currentRound];
 
   refs.trackContainer.classList.remove('free-roam');
+  refs.lobbyHold.hidden = true;
+  refs.finishLine.hidden = false;
   refs.lobbyLayer.hidden = true;
   refs.raceLayer.hidden = false;
 
@@ -196,8 +211,7 @@ function syncRace(state) {
       playerId,
       player: state.players[playerId],
       distance: round.positions[playerId] || 0,
-      velocity: round.velocities?.[playerId] || 0,
-      taps: round.taps?.[playerId] || 0
+      velocity: round.velocities?.[playerId] || 0
     }))
     .filter((entry) => entry.player && !entry.player.eliminated && entry.player.visible)
     .sort((a, b) => b.distance - a.distance);
@@ -237,7 +251,6 @@ function syncRace(state) {
     }
 
     sprite.positionLabel.textContent = `#${index + 1}`;
-    sprite.nameEl.textContent = entry.player.name;
     sprite.lane.style.order = String(index);
     sprite.lane.classList.toggle('leading', index === 0 && entry.distance > 0);
   });
@@ -268,6 +281,7 @@ function applyState(state) {
   }
 
   clearLobbySprites();
+  refs.lobbyHold.hidden = true;
 
   if (state.status === 'racing') {
     syncRace(state);
@@ -276,6 +290,7 @@ function applyState(state) {
 
   if (state.status === 'complete') {
     refs.trackContainer.classList.remove('free-roam');
+    refs.finishLine.hidden = false;
     refs.lobbyLayer.hidden = true;
     refs.raceLayer.hidden = true;
     refs.moreRacers.hidden = true;
@@ -285,6 +300,7 @@ function applyState(state) {
   }
 
   refs.trackContainer.classList.remove('free-roam');
+  refs.finishLine.hidden = true;
   refs.lobbyLayer.hidden = true;
   refs.raceLayer.hidden = true;
   setPlaceholder('WAITING FOR PLAYERS...');
@@ -296,74 +312,65 @@ function updateHud() {
     return;
   }
 
-  const timerValue = refs.timer;
-  const timerStatus = refs.timerStatus;
-  const timerBadge = refs.timerBadge;
-
   if (state.status === 'racing' && state.rounds[state.currentRound]?.startTime) {
     const round = state.rounds[state.currentRound];
     const elapsed = Date.now() - round.startTime;
-    const remaining = Math.max(0, 30 - Math.floor(elapsed / 1000));
-    timerValue.textContent = remaining;
-    timerStatus.style.display = 'none';
+    const remaining = Math.max(0, ROUND_DURATION_SECONDS - Math.floor(elapsed / 1000));
+    refs.timer.textContent = formatTimer(remaining);
+    refs.timerStatus.style.display = 'none';
 
     if (remaining <= 5) {
-      timerBadge.classList.add('warning');
+      refs.timerBadge.classList.add('warning');
     } else {
-      timerBadge.classList.remove('warning');
+      refs.timerBadge.classList.remove('warning');
     }
 
     return;
   }
 
-  timerBadge.classList.remove('warning');
+  refs.timerBadge.classList.remove('warning');
 
   if (state.status === 'complete') {
-    timerValue.textContent = '0';
-    timerStatus.style.display = 'block';
-    timerStatus.textContent = 'RACE COMPLETE';
+    refs.timer.textContent = formatTimer(0);
+    refs.timerStatus.style.display = 'block';
+    refs.timerStatus.textContent = 'RACE COMPLETE';
     return;
   }
 
   const visiblePlayers = getLobbyPlayers(state).length;
-  timerValue.textContent = '30';
-  timerStatus.style.display = 'block';
-  timerStatus.textContent = visiblePlayers > 0 ? 'READY TO RACE' : 'WAITING FOR PLAYERS';
+  refs.timer.textContent = formatTimer(ROUND_DURATION_SECONDS);
+  refs.timerStatus.style.display = 'block';
+  refs.timerStatus.textContent = visiblePlayers > 0
+    ? `${visiblePlayers} ${visiblePlayers === 1 ? 'CAKE' : 'CAKES'} READY`
+    : 'SCAN TO JOIN';
 }
 
 function animateLobby(now, dt) {
-  const maxX = Math.max(40, refs.lobbyLayer.clientWidth - 110);
-  const maxY = Math.max(40, refs.lobbyLayer.clientHeight - 110);
+  if (runtime.lobbySprites.size === 0) {
+    return;
+  }
+
+  const geometry = getLobbyGeometry();
+  const maxX = Math.max(120, geometry.width - 100);
+  const maxY = Math.max(120, geometry.height - 100);
 
   runtime.lobbySprites.forEach((sprite) => {
-    sprite.wanderTimer -= dt;
+    sprite.angle += sprite.angularVelocity * dt;
 
-    if (sprite.wanderTimer <= 0) {
-      sprite.wanderTimer = 0.9 + sprite.random() * 2.2;
-      sprite.vx += (sprite.random() - 0.5) * 26;
-      sprite.vy += (sprite.random() - 0.5) * 22;
-      sprite.vx = Math.max(-110, Math.min(110, sprite.vx));
-      sprite.vy = Math.max(-48, Math.min(48, sprite.vy));
-    }
-
-    sprite.x += sprite.vx * dt;
-    sprite.y += sprite.vy * dt;
-
-    if (sprite.x <= 0 || sprite.x >= maxX) {
-      sprite.x = Math.max(0, Math.min(maxX, sprite.x));
-      sprite.vx *= -1;
-    }
-
-    if (sprite.y <= 0 || sprite.y >= maxY) {
-      sprite.y = Math.max(0, Math.min(maxY, sprite.y));
-      sprite.vy *= -1;
-    }
-
+    const radiusWave = Math.sin(now / 1000 * sprite.radiusSpeed + sprite.bobPhase) * sprite.radiusWave;
+    const desiredRadius = Math.max(geometry.keepOutRadius + 36, sprite.baseRadius + radiusWave);
+    const safeRadiusX = Math.max(geometry.keepOutRadius + 36, Math.min(desiredRadius, Math.min(geometry.centerX - 70, maxX - geometry.centerX + 30)));
+    const safeRadiusY = Math.max(geometry.keepOutRadius * 0.68, Math.min(safeRadiusX * sprite.verticalScale, Math.min(geometry.centerY - 60, maxY - geometry.centerY + 20)));
     const bob = Math.sin(now / 140 + sprite.bobPhase) * 5;
-    const tilt = Math.max(-10, Math.min(10, sprite.vx / 12));
+    const centerX = geometry.centerX + Math.cos(sprite.angle) * safeRadiusX;
+    const centerY = geometry.centerY + Math.sin(sprite.angle) * safeRadiusY + bob;
+    const direction = Math.cos(sprite.angle) >= 0 ? 1 : -1;
+    const tilt = Math.sin(sprite.angle) * 8;
+    const x = Math.max(0, Math.min(maxX, centerX - 50));
+    const y = Math.max(0, Math.min(maxY, centerY - 50));
 
-    sprite.el.style.transform = `translate3d(${sprite.x}px, ${sprite.y + bob}px, 0) scaleX(${sprite.vx < 0 ? -1 : 1}) rotate(${tilt}deg)`;
-    sprite.el.style.zIndex = String(10 + Math.round(sprite.y));
+    sprite.el.style.transform = `translate3d(${x}px, ${y}px, 0) scaleX(${direction}) rotate(${tilt}deg)`;
+    sprite.el.style.zIndex = String(10 + Math.round(y));
   });
 }
 
@@ -371,8 +378,6 @@ function animateRace(now, dt) {
   if (runtime.raceOrder.length === 0) {
     return;
   }
-
-  let leaderDistance = 0;
 
   runtime.raceOrder.forEach((playerId) => {
     const sprite = runtime.raceSprites.get(playerId);
@@ -383,17 +388,12 @@ function animateRace(now, dt) {
     const elapsed = (now - sprite.syncedAt) / 1000;
     const predicted = sprite.serverPosition + sprite.serverVelocity * elapsed;
     const blend = Math.min(1, dt * 10);
-
     sprite.localPosition += (predicted - sprite.localPosition) * blend;
 
     if (Math.abs(predicted - sprite.localPosition) < 0.5) {
       sprite.localPosition = predicted;
     }
-
-    leaderDistance = Math.max(leaderDistance, sprite.localPosition);
   });
-
-  const trackDistance = Math.max(1400, leaderDistance * 1.08);
 
   runtime.raceOrder.forEach((playerId, index) => {
     const sprite = runtime.raceSprites.get(playerId);
@@ -402,7 +402,7 @@ function animateRace(now, dt) {
     }
 
     const runwayWidth = Math.max(0, sprite.runway.clientWidth - sprite.racer.clientWidth);
-    const progress = trackDistance > 0 ? Math.min(0.985, sprite.localPosition / trackDistance) : 0;
+    const progress = Math.min(0.985, sprite.localPosition / DISPLAY_TRACK_LENGTH);
     const x = runwayWidth * progress;
     const bob = Math.sin(now / 95 + sprite.phase + index) * (1.5 + Math.min(4, sprite.serverVelocity / 220));
     const lean = Math.max(-8, Math.min(10, sprite.serverVelocity / 75));
@@ -429,7 +429,6 @@ function showWinner(state) {
   }
 
   refs.winnerCake.innerHTML = generateCakeSVG(getCakeById(winner.cakeId));
-  refs.winnerName.textContent = winner.name;
   refs.winnerScreen.style.display = 'flex';
   runtime.winnerShownFor = winnerId;
 }
@@ -473,9 +472,9 @@ function initQRCode() {
   const playUrl = `${window.location.origin}/race/play.html`;
   new QRCode(document.getElementById('qrcode'), {
     text: playUrl,
-    width: 100,
-    height: 100,
-    colorDark: '#000',
+    width: 220,
+    height: 220,
+    colorDark: '#111',
     colorLight: '#fff'
   });
 }
