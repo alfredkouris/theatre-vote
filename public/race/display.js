@@ -12,6 +12,7 @@ const refs = {
   timer: document.getElementById('timer'),
   timerBadge: document.getElementById('timer-badge'),
   timerStatus: document.getElementById('timer-status'),
+  hudQr: document.getElementById('hud-qr'),
   trackContainer: document.getElementById('track-container'),
   waitingState: document.getElementById('waiting-state'),
   lobbyHold: document.getElementById('lobby-hold'),
@@ -142,6 +143,7 @@ function syncLobby(state) {
   const desiredIds = new Set(players.map((player) => player.id));
 
   refs.trackContainer.classList.add('free-roam');
+  refs.hudQr.hidden = true;
   refs.lobbyHold.hidden = false;
   refs.finishLine.hidden = true;
   refs.lobbyLayer.hidden = players.length === 0;
@@ -195,6 +197,7 @@ function syncRace(state) {
   const round = state.rounds[state.currentRound];
 
   refs.trackContainer.classList.remove('free-roam');
+  refs.hudQr.hidden = false;
   refs.lobbyHold.hidden = true;
   refs.finishLine.hidden = false;
   refs.lobbyLayer.hidden = true;
@@ -281,6 +284,7 @@ function applyState(state) {
   }
 
   clearLobbySprites();
+  refs.hudQr.hidden = false;
   refs.lobbyHold.hidden = true;
 
   if (state.status === 'racing') {
@@ -300,6 +304,7 @@ function applyState(state) {
   }
 
   refs.trackContainer.classList.remove('free-roam');
+  refs.hudQr.hidden = true;
   refs.finishLine.hidden = true;
   refs.lobbyLayer.hidden = true;
   refs.raceLayer.hidden = true;
@@ -468,15 +473,28 @@ async function pollState() {
   }
 }
 
-function initQRCode() {
+function renderQRCode(elementId, size) {
   const playUrl = `${window.location.origin}/race/play.html`;
-  new QRCode(document.getElementById('qrcode'), {
+  const element = document.getElementById(elementId);
+
+  if (!element) {
+    return;
+  }
+
+  element.innerHTML = '';
+
+  new QRCode(element, {
     text: playUrl,
-    width: 220,
-    height: 220,
+    width: size,
+    height: size,
     colorDark: '#111',
     colorLight: '#fff'
   });
+}
+
+function initQRCode() {
+  renderQRCode('qrcode', 220);
+  renderQRCode('hud-qrcode', 88);
 }
 
 window.addEventListener('load', () => {
