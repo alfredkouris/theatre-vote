@@ -56,10 +56,21 @@ let raceState = {
   roundStartTime: null,
 
   players: {},        // playerId: { id, name, cakeId, currentRound, eliminated }
-  rounds: {},         // roundNumber: { participants, positions, taps, winners, startTime, endTime }
+  rounds: {},         // roundNumber: { participants, positions, velocities, taps, winners, startTime, endTime }
   tapHistory: {},     // playerId: [timestamp, ...]
   availableCakes: Array.from({length: 55}, (_, i) => i + 1)  // [1, 2, 3, ..., 55]
 };
+
+// Physics constants
+const PHYSICS = {
+  TAP_ACCELERATION: 2.5,    // How much velocity each tap adds
+  FRICTION: 0.98,           // Velocity decay per frame (0.98 = 2% loss)
+  MAX_VELOCITY: 8,          // Maximum velocity cap
+  UPDATE_INTERVAL: 50       // Physics update every 50ms (20 FPS)
+};
+
+// Physics update interval
+let physicsInterval = null;
 
 // Generate unique player ID
 function generatePlayerId() {
@@ -82,7 +93,43 @@ function getNextAvailableCake() {
   return cakeId;
 }
 
-// Process tap with rate limiting
+// Physics update loop - runs continuously during races
+function updatePhysics() {
+  if (raceState.status !== 'racing') return;
+
+  const round = raceState.rounds[raceState.currentRound];
+  if (!round || !round.velocities) return;
+
+  // Update each racer's position based on velocity
+  round.participants.forEach(playerId => {
+    const velocity = round.velocities[playerId] || 0;
+    const position = round.positions[playerId] || 0;
+
+    // Update position
+    const newPosition = position + velocity;
+    round.positions[playerId] = newPosition;
+
+    // Apply friction (velocity decay)
+    const newVelocity = velocity * PHYSICS.FRICTION;
+    round.velocities[playerId] = Math.max(0, newVelocity);
+  });
+}
+
+// Start physics loop
+function startPhysicsLoop() {
+  if (physicsInterval) clearInterval(physicsInterval);
+  physicsInterval = setInterval(updatePhysics, PHYSICS.UPDATE_INTERVAL);
+}
+
+// Stop physics loop
+function stopPhysicsLoop() {
+  if (physicsInterval) {
+    clearInterval(physicsInterval);
+    physicsInterval = null;
+  }
+}
+
+// Process tap with rate limiting - now adds velocity instead of distance
 function processTap(playerId, currentTime) {
   // Check if player exists and is not eliminated
   const player = raceState.players[playerId];
@@ -109,7 +156,7 @@ function processTap(playerId, currentTime) {
     return { success: false, reason: 'rate-limited' };
   }
 
-  // Record tap and calculate distance
+  // Record tap
   raceState.tapHistory[playerId].push(currentTime);
 
   const round = raceState.rounds[raceState.currentRound];
@@ -117,15 +164,17 @@ function processTap(playerId, currentTime) {
     return { success: false, reason: 'no-active-round' };
   }
 
-  const currentDistance = round.positions[playerId] || 0;
-  const newDistance = currentDistance + 5;  // 1 tap = 5 pixels
+  // Increase velocity instead of directly adding distance
+  const currentVelocity = round.velocities[playerId] || 0;
+  const newVelocity = Math.min(PHYSICS.MAX_VELOCITY, currentVelocity + PHYSICS.TAP_ACCELERATION);
 
-  round.positions[playerId] = newDistance;
+  round.velocities[playerId] = newVelocity;
   round.taps[playerId] = (round.taps[playerId] || 0) + 1;
 
   return {
     success: true,
-    distance: newDistance,
+    velocity: newVelocity,
+    position: round.positions[playerId] || 0,
     taps: round.taps[playerId]
   };
 }
@@ -169,14 +218,19 @@ function advanceToNextRound(winners, currentRound) {
   raceState.rounds[nextRound] = {
     participants: winners,
     positions: {},
+    velocities: {},
     taps: {},
     winners: [],
     startTime: null,
     endTime: null
   };
 
-  // Update player rounds
+  // Initialize positions and velocities for next round
   winners.forEach(id => {
+    raceState.rounds[nextRound].positions[id] = 0;
+    raceState.rounds[nextRound].velocities[id] = 0;
+    raceState.rounds[nextRound].taps[id] = 0;
+
     if (raceState.players[id]) {
       raceState.players[id].currentRound = nextRound;
     }
@@ -234,6 +288,7 @@ app.post('/api/race/join', (req, res) => {
     raceState.rounds[roundNum] = {
       participants: [],
       positions: {},
+      velocities: {},
       taps: {},
       winners: [],
       startTime: null,
@@ -245,6 +300,7 @@ app.post('/api/race/join', (req, res) => {
   if (!raceState.rounds[roundNum].participants.includes(playerId)) {
     raceState.rounds[roundNum].participants.push(playerId);
     raceState.rounds[roundNum].positions[playerId] = 0;
+    raceState.rounds[roundNum].velocities[playerId] = 0;
     raceState.rounds[roundNum].taps[playerId] = 0;
   }
 
@@ -302,15 +358,17 @@ app.post('/api/race/admin/start', (req, res) => {
     raceState.rounds[roundNum] = {
       participants: Object.keys(raceState.players),
       positions: {},
+      velocities: {},
       taps: {},
       winners: [],
       startTime: Date.now(),
       endTime: null
     };
 
-    // Initialize positions for all participants
+    // Initialize positions and velocities for all participants
     raceState.rounds[roundNum].participants.forEach(playerId => {
       raceState.rounds[roundNum].positions[playerId] = 0;
+      raceState.rounds[roundNum].velocities[playerId] = 0;
       raceState.rounds[roundNum].taps[playerId] = 0;
     });
   } else {
@@ -320,6 +378,9 @@ app.post('/api/race/admin/start', (req, res) => {
   raceState.status = 'racing';
   raceState.currentRound = roundNum;
   raceState.roundStartTime = Date.now();
+
+  // Start physics loop for continuous movement
+  startPhysicsLoop();
 
   res.json({ success: true, round: roundNum, startTime: raceState.roundStartTime });
 });
@@ -341,6 +402,9 @@ app.post('/api/race/admin/stop', (req, res) => {
 
   if (round) {
     round.endTime = Date.now();
+
+    // Stop physics loop
+    stopPhysicsLoop();
 
     // Calculate winners
     const winners = calculateWinners(currentRound);
@@ -368,6 +432,9 @@ app.post('/api/race/admin/reset', (req, res) => {
   if (password !== RACE_ADMIN_PASSWORD) {
     return res.status(401).json({ success: false, error: 'Invalid password' });
   }
+
+  // Stop physics loop
+  stopPhysicsLoop();
 
   // Reset all state
   raceState = {
