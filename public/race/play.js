@@ -2,6 +2,7 @@ const DEVICE_STORAGE_KEY = 'cake-race-device-id';
 const PLAYER_POLL_MS = {
   waiting: 500,
   racing: 220,
+  results: 420,
   complete: 600
 };
 
@@ -164,6 +165,12 @@ function updateTapCopy() {
   if (playerState.canTap) {
     refs.tapPrompt.textContent = 'TAP';
     refs.tapInstructions.textContent = 'Tap fast to race';
+    return;
+  }
+
+  if (playerState.raceState?.status === 'results') {
+    refs.tapPrompt.textContent = 'READY';
+    refs.tapInstructions.textContent = 'Round complete. Next round soon.';
     return;
   }
 

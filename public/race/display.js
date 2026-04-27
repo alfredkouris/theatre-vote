@@ -1,11 +1,13 @@
 const DISPLAY_POLL_MS = {
   waiting: 450,
   racing: 120,
+  results: 350,
   complete: 600
 };
 
 const ROUND_DURATION_SECONDS = 30;
 const DISPLAY_TRACK_LENGTH = 14000;
+const DEFAULT_BRACKET_COLUMNS = [16, 8, 4, 2, 1];
 
 const refs = {
   roundNum: document.getElementById('round-num'),
@@ -18,6 +20,15 @@ const refs = {
   lobbyHold: document.getElementById('lobby-hold'),
   lobbyLayer: document.getElementById('lobby-layer'),
   raceLayer: document.getElementById('race-layer'),
+  resultsScreen: document.getElementById('results-screen'),
+  resultsKicker: document.getElementById('results-kicker'),
+  resultsTitle: document.getElementById('results-title'),
+  resultsSubtitle: document.getElementById('results-subtitle'),
+  resultsBoardHeading: document.getElementById('results-board-heading'),
+  qualifierGrid: document.getElementById('qualifier-grid'),
+  bracketGrid: document.getElementById('bracket-grid'),
+  resultsChampion: document.getElementById('results-champion'),
+  resultsChampionCake: document.getElementById('results-champion-cake'),
   moreRacers: document.getElementById('more-racers'),
   finishLine: document.querySelector('.finish-line-area'),
   winnerScreen: document.getElementById('winner-screen'),
@@ -87,6 +98,13 @@ function hideWinner() {
   runtime.winnerShownFor = null;
 }
 
+function hideResults() {
+  refs.resultsScreen.hidden = true;
+  refs.resultsChampion.hidden = true;
+  refs.qualifierGrid.innerHTML = '';
+  refs.bracketGrid.innerHTML = '';
+}
+
 function clearLobbySprites() {
   runtime.lobbySprites.forEach((sprite) => {
     sprite.el.remove();
@@ -148,6 +166,7 @@ function syncLobby(state) {
   refs.finishLine.hidden = true;
   refs.lobbyLayer.hidden = players.length === 0;
   refs.raceLayer.hidden = true;
+  refs.resultsScreen.hidden = true;
   refs.moreRacers.hidden = true;
   hidePlaceholder();
 
@@ -202,6 +221,7 @@ function syncRace(state) {
   refs.finishLine.hidden = false;
   refs.lobbyLayer.hidden = true;
   refs.raceLayer.hidden = false;
+  refs.resultsScreen.hidden = true;
 
   if (!round || !round.participants || round.participants.length === 0) {
     clearRaceSprites();
@@ -269,16 +289,156 @@ function syncRace(state) {
   }
 }
 
+function formatDistance(distance) {
+  return `${Math.max(0, Math.round((distance || 0) / 10))}m`;
+}
+
+function getResultPayload(state) {
+  return state.lastResult || null;
+}
+
+function getBracketColumns(state) {
+  const targets = Array.isArray(state.roundTargets) && state.roundTargets.length > 0
+    ? state.roundTargets
+    : DEFAULT_BRACKET_COLUMNS;
+
+  return targets.map((size, index) => ({
+    round: index + 1,
+    size,
+    label: size === 1 ? 'WINNER' : `TOP ${size}`
+  }));
+}
+
+function renderQualifierCards(state, result) {
+  const winnerIds = new Set(result.winners || []);
+  const entries = (result.complete ? result.rankings : result.rankings.filter((entry) => winnerIds.has(entry.playerId)))
+    .map((entry, index) => {
+      const player = state.players[entry.playerId];
+
+      if (!player) {
+        return '';
+      }
+
+      return `
+        <article class="qualifier-card ${winnerIds.has(entry.playerId) ? 'qualified' : 'eliminated'}">
+          <span class="qualifier-rank">#${index + 1}</span>
+          <div class="qualifier-cake">${generateCakeSVG(getCakeById(player.cakeId))}</div>
+          <div class="qualifier-meta">
+            <span class="qualifier-state">${winnerIds.has(entry.playerId) ? 'ADVANCES' : 'FINISHED'}</span>
+            <span class="qualifier-distance">${formatDistance(entry.distance)}</span>
+          </div>
+        </article>
+      `;
+    })
+    .join('');
+
+  refs.qualifierGrid.innerHTML = entries;
+}
+
+function getBracketIds(state, roundNumber) {
+  const round = state.rounds[roundNumber];
+  if (!round || !Array.isArray(round.winners)) {
+    return [];
+  }
+
+  return round.winners;
+}
+
+function renderBracket(state) {
+  const columns = getBracketColumns(state);
+  refs.bracketGrid.style.gridTemplateColumns = `repeat(${columns.length}, minmax(0, 1fr))`;
+  refs.bracketGrid.innerHTML = columns.map((column) => {
+    const filledIds = getBracketIds(state, column.round);
+    const slots = Array.from({ length: column.size }, (_, index) => {
+      const playerId = filledIds[index];
+      const player = playerId ? state.players[playerId] : null;
+
+      if (!player) {
+        return `
+          <div class="bracket-slot empty">
+            <span class="bracket-slot-label">TBD</span>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="bracket-slot filled">
+          <div class="bracket-slot-cake">${generateCakeSVG(getCakeById(player.cakeId))}</div>
+          <span class="bracket-slot-label">#${index + 1}</span>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <section class="bracket-column ${filledIds.length > 0 ? 'resolved' : 'pending'}">
+        <div class="bracket-column-label">${column.label}</div>
+        <div class="bracket-column-slots">${slots}</div>
+      </section>
+    `;
+  }).join('');
+}
+
+function syncResults(state) {
+  const result = getResultPayload(state);
+
+  refs.trackContainer.classList.remove('free-roam');
+  refs.hudQr.hidden = true;
+  refs.lobbyHold.hidden = true;
+  refs.finishLine.hidden = true;
+  refs.lobbyLayer.hidden = true;
+  refs.raceLayer.hidden = true;
+  refs.moreRacers.hidden = true;
+  refs.resultsScreen.hidden = false;
+  hidePlaceholder();
+
+  if (!result) {
+    refs.resultsKicker.textContent = 'ROUND COMPLETE';
+    refs.resultsTitle.textContent = 'Leaderboard Locked';
+    refs.resultsSubtitle.textContent = 'Waiting for the next round.';
+    refs.resultsBoardHeading.textContent = 'QUALIFIERS';
+    refs.resultsChampion.hidden = true;
+    refs.qualifierGrid.innerHTML = '';
+    refs.bracketGrid.innerHTML = '';
+    return;
+  }
+
+  const championId = result.winner || state.rounds[4]?.winners?.[0] || null;
+  const champion = championId ? state.players[championId] : null;
+
+  refs.resultsKicker.textContent = result.complete
+    ? 'TOURNAMENT COMPLETE'
+    : `ROUND ${result.roundNumber} COMPLETE`;
+  refs.resultsTitle.textContent = result.complete
+    ? 'Champion Crowned'
+    : `${result.winners.length} Cakes Advance`;
+  refs.resultsSubtitle.textContent = result.complete
+    ? 'The final leaderboard is locked in.'
+    : `${result.winners.length} cakes move on to Round ${result.nextRound}.`;
+  refs.resultsBoardHeading.textContent = result.complete ? 'FINAL STANDINGS' : 'QUALIFIERS';
+
+  if (champion) {
+    refs.resultsChampion.hidden = false;
+    refs.resultsChampionCake.innerHTML = generateCakeSVG(getCakeById(champion.cakeId));
+  } else {
+    refs.resultsChampion.hidden = true;
+    refs.resultsChampionCake.innerHTML = '';
+  }
+
+  renderQualifierCards(state, result);
+  renderBracket(state);
+}
+
 function applyState(state) {
   runtime.state = state;
-  refs.roundNum.textContent = state.currentRound || 1;
+  refs.roundNum.textContent = state.status === 'results'
+    ? state.lastResult?.roundNumber || state.currentRound || 1
+    : state.currentRound || 1;
 
-  if (state.status !== 'complete') {
-    hideWinner();
-  }
+  hideWinner();
 
   if (state.status === 'waiting') {
     clearRaceSprites();
+    hideResults();
     syncLobby(state);
     return;
   }
@@ -288,18 +448,14 @@ function applyState(state) {
   refs.lobbyHold.hidden = true;
 
   if (state.status === 'racing') {
+    hideResults();
     syncRace(state);
     return;
   }
 
-  if (state.status === 'complete') {
-    refs.trackContainer.classList.remove('free-roam');
-    refs.finishLine.hidden = false;
-    refs.lobbyLayer.hidden = true;
-    refs.raceLayer.hidden = true;
-    refs.moreRacers.hidden = true;
-    hidePlaceholder();
-    showWinner(state);
+  if (state.status === 'results' || state.status === 'complete') {
+    clearRaceSprites();
+    syncResults(state);
     return;
   }
 
@@ -308,6 +464,7 @@ function applyState(state) {
   refs.finishLine.hidden = true;
   refs.lobbyLayer.hidden = true;
   refs.raceLayer.hidden = true;
+  refs.resultsScreen.hidden = true;
   setPlaceholder('WAITING FOR PLAYERS...');
 }
 
@@ -335,10 +492,17 @@ function updateHud() {
 
   refs.timerBadge.classList.remove('warning');
 
+  if (state.status === 'results' && state.lastResult) {
+    refs.timer.textContent = formatTimer(0);
+    refs.timerStatus.style.display = 'block';
+    refs.timerStatus.textContent = `ROUND ${state.lastResult.roundNumber} RESULTS`;
+    return;
+  }
+
   if (state.status === 'complete') {
     refs.timer.textContent = formatTimer(0);
     refs.timerStatus.style.display = 'block';
-    refs.timerStatus.textContent = 'RACE COMPLETE';
+    refs.timerStatus.textContent = 'CHAMPION DECLARED';
     return;
   }
 

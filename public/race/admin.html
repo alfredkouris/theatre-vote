@@ -225,8 +225,9 @@
 
       // Update status
       const statusBadge = document.getElementById('status');
-      statusBadge.textContent = state.status;
-      statusBadge.className = 'value status-badge status-' + state.status;
+      const statusClass = state.status === 'results' ? 'round-complete' : state.status;
+      statusBadge.textContent = state.status === 'results' ? 'round complete' : state.status;
+      statusBadge.className = 'value status-badge status-' + statusClass;
 
       // Update round
       document.getElementById('current-round').textContent = state.currentRound || 'Waiting';
@@ -286,6 +287,8 @@
             ? '⏳ Reserved'
             : state.status === 'racing' && player.currentRound === state.currentRound
               ? '🏁 Racing'
+              : state.status === 'results' && player.currentRound === state.currentRound
+                ? '🏆 Qualified'
               : '✅ Ready';
 
         return `
@@ -315,8 +318,14 @@
         const roundNum = round.participants ? Object.keys(state.rounds).find(key => state.rounds[key] === round) : '?';
         const participants = round.participants ? round.participants.length : 0;
         const winners = round.winners ? round.winners.length : 0;
-
-        const status = round.endTime ? '✅ Complete' : round.startTime ? '🏁 Racing' : '⏳ Waiting';
+        const isLatestResult = Number(roundNum) === state.lastResult?.roundNumber && state.status === 'results';
+        const status = isLatestResult
+          ? '🏆 Results'
+          : round.endTime
+            ? '✅ Complete'
+            : round.startTime
+              ? '🏁 Racing'
+              : '⏳ Waiting';
 
         return `
           <div class="round-item">

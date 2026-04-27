@@ -55,13 +55,10 @@ const CAKE_NAMES = [
   "Ice Cream Sundae", "S'mores Surprise", "Birthday Blast", "Neapolitan", "Wedding White"
 ];
 
-// Round configuration
-const ROUND_CONFIG = {
-  1: { winners: 16 },
-  2: { winners: 8 },
-  3: { winners: 4 },
-  4: { winners: 1 }
-};
+const MAX_BRACKET_SIZE = 16;
+
+const ROUND_DURATION_SECONDS = 30;
+const ROUND_DURATION_MS = ROUND_DURATION_SECONDS * 1000;
 
 // Physics constants
 const PHYSICS = {
@@ -82,6 +79,7 @@ function createRound(participants = []) {
     velocities: {},
     boosts: {},
     taps: {},
+    rankings: [],
     winners: [],
     startTime: null,
     endTime: null
@@ -102,6 +100,8 @@ function createInitialRaceState() {
     status: 'waiting',
     currentRound: 0,
     roundStartTime: null,
+    lastResult: null,
+    roundTargets: [],
     players: {},
     rounds: {},
     tapHistory: {},
@@ -162,6 +162,26 @@ function ensureRoundParticipant(roundNumber, playerId) {
   }
 
   return round;
+}
+
+function buildRoundTargets(participantCount) {
+  if (participantCount <= 1) {
+    return [1];
+  }
+
+  let nextCut = 1;
+
+  while (nextCut * 2 < participantCount && nextCut * 2 <= MAX_BRACKET_SIZE) {
+    nextCut *= 2;
+  }
+
+  const targets = [];
+
+  for (let size = nextCut; size >= 1; size /= 2) {
+    targets.push(size);
+  }
+
+  return targets;
 }
 
 function hasRaceStarted() {
@@ -225,6 +245,10 @@ function updatePhysics() {
     round.velocities[playerId] = nextVelocity;
     round.positions[playerId] = (round.positions[playerId] || 0) + nextVelocity * dt;
   });
+
+  if (round.startTime && Date.now() - round.startTime >= ROUND_DURATION_MS) {
+    finishCurrentRound('timer');
+  }
 }
 
 function startPhysicsLoop() {
@@ -288,39 +312,60 @@ function processTap(playerId, currentTime) {
   };
 }
 
-function calculateWinners(roundNumber) {
+function buildRoundRankings(roundNumber) {
   const round = raceState.rounds[roundNumber];
   if (!round) {
     return [];
   }
 
-  const rankings = round.participants
+  return round.participants
     .map((playerId) => ({
       playerId,
-      distance: round.positions[playerId] || 0
+      distance: round.positions[playerId] || 0,
+      taps: round.taps[playerId] || 0,
+      joinedAt: raceState.players[playerId]?.joinedAt || 0
     }))
-    .sort((a, b) => b.distance - a.distance);
+    .sort((a, b) => {
+      if (b.distance !== a.distance) {
+        return b.distance - a.distance;
+      }
+
+      if (b.taps !== a.taps) {
+        return b.taps - a.taps;
+      }
+
+      return a.joinedAt - b.joinedAt;
+    });
+}
+
+function calculateWinners(roundNumber) {
+  const rankings = buildRoundRankings(roundNumber);
 
   if (rankings.length === 0) {
-    return [];
+    return { rankings: [], winners: [], eliminated: [] };
   }
 
-  const configuredWinners = ROUND_CONFIG[roundNumber].winners;
+  const configuredWinners = raceState.roundTargets[roundNumber - 1] || 1;
   const actualWinners = Math.min(configuredWinners, rankings.length);
   const winners = rankings.slice(0, actualWinners).map((ranking) => ranking.playerId);
+  const eliminated = rankings.slice(actualWinners).map((ranking) => ranking.playerId);
 
-  rankings.slice(actualWinners).forEach((ranking) => {
-    if (raceState.players[ranking.playerId]) {
-      raceState.players[ranking.playerId].eliminated = true;
+  eliminated.forEach((playerId) => {
+    if (raceState.players[playerId]) {
+      raceState.players[playerId].eliminated = true;
     }
   });
 
-  return winners;
+  return { rankings, winners, eliminated };
 }
 
 function advanceToNextRound(winners, currentRound) {
-  if (currentRound === 4 || winners.length <= 1) {
+  raceState.roundStartTime = null;
+  const nextTarget = raceState.roundTargets[currentRound] || null;
+
+  if (!nextTarget || winners.length <= 1) {
     raceState.status = 'complete';
+    raceState.currentRound = currentRound;
     return { complete: true, winner: winners[0] || null };
   }
 
@@ -334,9 +379,52 @@ function advanceToNextRound(winners, currentRound) {
   });
 
   raceState.currentRound = nextRound;
-  raceState.status = 'waiting';
+  raceState.status = 'results';
 
   return { complete: false, round: nextRound };
+}
+
+function finishCurrentRound(reason = 'manual') {
+  if (raceState.status !== 'racing') {
+    return null;
+  }
+
+  const currentRound = raceState.currentRound;
+  const round = raceState.rounds[currentRound];
+
+  if (!round) {
+    return null;
+  }
+
+  round.endTime = Date.now();
+  stopPhysicsLoop();
+
+  const { rankings, winners, eliminated } = calculateWinners(currentRound);
+  round.rankings = rankings;
+  round.winners = winners;
+
+  const result = advanceToNextRound(winners, currentRound);
+
+  raceState.lastResult = {
+    reason,
+    roundNumber: currentRound,
+    rankings,
+    winners,
+    eliminated,
+    finishedAt: round.endTime,
+    nextRound: result.round || null,
+    complete: result.complete,
+    winner: result.winner || null
+  };
+
+  return {
+    success: true,
+    winners,
+    rankings,
+    complete: result.complete,
+    nextRound: result.round || null,
+    winner: result.winner || null
+  };
 }
 
 // ===== RACE API ENDPOINTS =====
@@ -449,6 +537,14 @@ app.post('/api/race/admin/start', (req, res) => {
     return res.status(401).json({ success: false, error: 'Invalid password' });
   }
 
+  if (raceState.status === 'racing') {
+    return res.json({ success: false, error: 'A round is already in play' });
+  }
+
+  if (raceState.status === 'complete') {
+    return res.json({ success: false, error: 'The tournament is complete. Reset to start again.' });
+  }
+
   const roundNum = raceState.currentRound || 1;
   const round = ensureRound(roundNum);
   const activeParticipants = round.participants.filter((playerId) => {
@@ -458,6 +554,10 @@ app.post('/api/race/admin/start', (req, res) => {
 
   if (activeParticipants.length === 0) {
     return res.json({ success: false, error: 'No activated cakes are ready for this round' });
+  }
+
+  if (raceState.roundTargets.length === 0) {
+    raceState.roundTargets = buildRoundTargets(activeParticipants.length);
   }
 
   round.participants = activeParticipants;
@@ -476,6 +576,7 @@ app.post('/api/race/admin/start', (req, res) => {
   raceState.status = 'racing';
   raceState.currentRound = roundNum;
   raceState.roundStartTime = Date.now();
+  raceState.lastResult = null;
 
   startPhysicsLoop();
 
@@ -494,29 +595,14 @@ app.post('/api/race/admin/stop', (req, res) => {
     return res.json({ success: false, error: 'No active race' });
   }
 
-  const currentRound = raceState.currentRound;
-  const round = raceState.rounds[currentRound];
+  const result = finishCurrentRound('manual');
 
-  if (round) {
-    round.endTime = Date.now();
-
-    stopPhysicsLoop();
-
-    const winners = calculateWinners(currentRound);
-    round.winners = winners;
-
-    const result = advanceToNextRound(winners, currentRound);
-
-    res.json({
-      success: true,
-      winners,
-      complete: result.complete,
-      nextRound: result.round || null,
-      winner: result.winner || null
-    });
-  } else {
+  if (!result) {
     res.json({ success: false, error: 'No round data' });
+    return;
   }
+
+  res.json(result);
 });
 
 // Admin: Reset game
