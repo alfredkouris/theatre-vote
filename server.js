@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -56,6 +57,7 @@ const CAKE_NAMES = [
 ];
 
 const MAX_BRACKET_SIZE = 16;
+const MAX_CAKES = CAKE_NAMES.length;
 
 const ROUND_DURATION_SECONDS = 30;
 const ROUND_DURATION_MS = ROUND_DURATION_SECONDS * 1000;
@@ -106,7 +108,7 @@ function createInitialRaceState() {
     rounds: {},
     tapHistory: {},
     devicePlayers: {},
-    availableCakes: Array.from({ length: CAKE_NAMES.length }, (_, index) => index + 1)
+    availableCakes: Array.from({ length: MAX_CAKES }, (_, index) => index + 1)
   };
 }
 
@@ -118,16 +120,15 @@ function generatePlayerId() {
 }
 
 function getNextAvailableCake() {
-  if (raceState.availableCakes.length === 0) {
-    const eliminatedPlayers = Object.values(raceState.players).filter((player) => player.eliminated);
-    if (eliminatedPlayers.length > 0) {
-      return eliminatedPlayers[0].cakeId;
-    }
+  return raceState.availableCakes.shift() || null;
+}
 
-    return Math.floor(Math.random() * CAKE_NAMES.length) + 1;
-  }
+function getPlayerLaneIndex(playerId) {
+  return raceState.players[playerId]?.laneIndex ?? Number.MAX_SAFE_INTEGER;
+}
 
-  return raceState.availableCakes.shift();
+function sortPlayerIdsByLane(playerIds = []) {
+  return [...playerIds].sort((a, b) => getPlayerLaneIndex(a) - getPlayerLaneIndex(b));
 }
 
 function ensureRound(roundNumber) {
@@ -211,6 +212,7 @@ function buildPlayerPayload(player, reused = false) {
     cakeId: player.cakeId,
     cakeName: player.name,
     currentRound: player.currentRound,
+    laneIndex: player.laneIndex,
     visible: player.visible,
     eliminated: player.eliminated,
     canActivate: canActivatePlayer(player),
@@ -370,9 +372,10 @@ function advanceToNextRound(winners, currentRound) {
   }
 
   const nextRound = currentRound + 1;
-  raceState.rounds[nextRound] = createRound(winners);
+  const stableLaneWinners = sortPlayerIdsByLane(winners);
+  raceState.rounds[nextRound] = createRound(stableLaneWinners);
 
-  winners.forEach((playerId) => {
+  stableLaneWinners.forEach((playerId) => {
     if (raceState.players[playerId]) {
       raceState.players[playerId].currentRound = nextRound;
     }
@@ -437,6 +440,42 @@ app.get('/api/race/status', (req, res) => {
   });
 });
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/survey', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/survey/vote', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'vote.html'));
+});
+
+app.get('/survey/display', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/race', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'race', 'display.html'));
+});
+
+app.get('/race/play', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'race', 'play.html'));
+});
+
+app.get('/race/display', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'race', 'display.html'));
+});
+
+app.get('/race/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'race', 'admin.html'));
+});
+
+app.get('/race/cupcakes', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'race', 'cupcakes.html'));
+});
+
 // Join race
 app.post('/api/race/join', (req, res) => {
   const { deviceId } = req.body || {};
@@ -460,14 +499,29 @@ app.post('/api/race/join', (req, res) => {
     });
   }
 
+  if (Object.keys(raceState.players).length >= MAX_CAKES) {
+    return res.status(409).json({
+      success: false,
+      error: `All ${MAX_CAKES} cupcakes are already in use. Reset the race to start a fresh field.`
+    });
+  }
+
   const playerId = generatePlayerId();
   const cakeId = getNextAvailableCake();
+  if (!cakeId) {
+    return res.status(409).json({
+      success: false,
+      error: `All ${MAX_CAKES} cupcakes are already in use. Reset the race to start a fresh field.`
+    });
+  }
+
   const cakeName = CAKE_NAMES[cakeId - 1] || `Cake ${cakeId}`;
   const player = {
     id: playerId,
     deviceId,
     name: cakeName,
     cakeId,
+    laneIndex: Object.keys(raceState.players).length,
     joinedAt: Date.now(),
     lastSeenAt: Date.now(),
     currentRound: 1,
@@ -547,10 +601,10 @@ app.post('/api/race/admin/start', (req, res) => {
 
   const roundNum = raceState.currentRound || 1;
   const round = ensureRound(roundNum);
-  const activeParticipants = round.participants.filter((playerId) => {
+  const activeParticipants = sortPlayerIdsByLane(round.participants.filter((playerId) => {
     const player = raceState.players[playerId];
     return player && player.visible && !player.eliminated && player.currentRound === roundNum;
-  });
+  }));
 
   if (activeParticipants.length === 0) {
     return res.json({ success: false, error: 'No activated cakes are ready for this round' });
@@ -622,9 +676,12 @@ app.post('/api/race/admin/reset', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
-  console.log(`Voting Display: http://localhost:${PORT}/index.html`);
-  console.log(`Voting Page: http://localhost:${PORT}/vote.html`);
-  console.log(`Race Display: http://localhost:${PORT}/race/display.html`);
-  console.log(`Race Play: http://localhost:${PORT}/race/play.html`);
-  console.log(`Race Admin: http://localhost:${PORT}/race/admin.html`);
+  console.log(`Survey Home: http://localhost:${PORT}/survey`);
+  console.log(`Survey Vote: http://localhost:${PORT}/survey/vote`);
+  console.log(`Survey Display Alias: http://localhost:${PORT}/survey/display`);
+  console.log(`Race Home: http://localhost:${PORT}/race`);
+  console.log(`Race Play: http://localhost:${PORT}/race/play`);
+  console.log(`Race Display Alias: http://localhost:${PORT}/race/display`);
+  console.log(`Race Admin: http://localhost:${PORT}/race/admin`);
+  console.log(`Cupcake Gallery: http://localhost:${PORT}/race/cupcakes`);
 });

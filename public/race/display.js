@@ -7,7 +7,6 @@ const DISPLAY_POLL_MS = {
 
 const ROUND_DURATION_SECONDS = 30;
 const DISPLAY_TRACK_LENGTH = 14000;
-const DEFAULT_BRACKET_COLUMNS = [16, 8, 4, 2, 1];
 
 const refs = {
   roundNum: document.getElementById('round-num'),
@@ -25,14 +24,12 @@ const refs = {
   resultsTitle: document.getElementById('results-title'),
   resultsSubtitle: document.getElementById('results-subtitle'),
   resultsBoardHeading: document.getElementById('results-board-heading'),
-  qualifierGrid: document.getElementById('qualifier-grid'),
-  bracketGrid: document.getElementById('bracket-grid'),
-  resultsChampion: document.getElementById('results-champion'),
-  resultsChampionCake: document.getElementById('results-champion-cake'),
-  moreRacers: document.getElementById('more-racers'),
-  finishLine: document.querySelector('.finish-line-area'),
-  winnerScreen: document.getElementById('winner-screen'),
-  winnerCake: document.getElementById('winner-cake')
+  resultsGrid: document.getElementById('results-grid'),
+  roundResults: document.getElementById('round-results'),
+  podiumScreen: document.getElementById('podium-screen'),
+  podium: document.getElementById('podium'),
+  remainingGrid: document.getElementById('remaining-grid'),
+  finishLine: document.querySelector('.finish-line-area')
 };
 
 const runtime = {
@@ -43,31 +40,8 @@ const runtime = {
   lobbySprites: new Map(),
   raceSprites: new Map(),
   raceOrder: [],
-  winnerShownFor: null
+  decorativeSprites: new Map()
 };
-
-function hashString(value) {
-  let hash = 0;
-
-  for (let index = 0; index < value.length; index += 1) {
-    hash = (hash << 5) - hash + value.charCodeAt(index);
-    hash |= 0;
-  }
-
-  return hash >>> 0;
-}
-
-function mulberry32(seed) {
-  let value = seed >>> 0;
-
-  return () => {
-    value += 0x6D2B79F5;
-    let next = value;
-    next = Math.imul(next ^ (next >>> 15), next | 1);
-    next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
-    return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 function formatTimer(totalSeconds) {
   const seconds = Math.max(0, totalSeconds);
@@ -76,12 +50,43 @@ function formatTimer(totalSeconds) {
   return `${minutesPart}:${secondsPart}`;
 }
 
+function formatLaneNumber(player) {
+  return String((player?.laneIndex ?? 0) + 1).padStart(2, '0');
+}
+
 function getLobbyPlayers(state) {
   const roundNumber = state.currentRound || 1;
 
-  return Object.values(state.players).filter(
-    (player) => player.visible && !player.eliminated && player.currentRound === roundNumber
-  );
+  return Object.values(state.players)
+    .filter((player) => player.visible && !player.eliminated && player.currentRound === roundNumber)
+    .sort((a, b) => (a.laneIndex ?? 0) - (b.laneIndex ?? 0));
+}
+
+function getRaceParticipants(state) {
+  const round = state.rounds[state.currentRound];
+  if (!round || !Array.isArray(round.participants)) {
+    return [];
+  }
+
+  return round.participants
+    .map((playerId) => ({
+      playerId,
+      player: state.players[playerId],
+      distance: round.positions[playerId] || 0,
+      velocity: round.velocities?.[playerId] || 0
+    }))
+    .filter((entry) => entry.player && !entry.player.eliminated && entry.player.visible)
+    .sort((a, b) => (a.player.laneIndex ?? 0) - (b.player.laneIndex ?? 0));
+}
+
+function buildRankingMap(rankings = []) {
+  const rankingMap = new Map();
+
+  rankings.forEach((entry, index) => {
+    rankingMap.set(entry.playerId, index + 1);
+  });
+
+  return rankingMap;
 }
 
 function setPlaceholder(text) {
@@ -93,16 +98,14 @@ function hidePlaceholder() {
   refs.waitingState.hidden = true;
 }
 
-function hideWinner() {
-  refs.winnerScreen.style.display = 'none';
-  runtime.winnerShownFor = null;
-}
-
 function hideResults() {
   refs.resultsScreen.hidden = true;
-  refs.resultsChampion.hidden = true;
-  refs.qualifierGrid.innerHTML = '';
-  refs.bracketGrid.innerHTML = '';
+  refs.roundResults.hidden = false;
+  refs.podiumScreen.hidden = true;
+  refs.resultsGrid.innerHTML = '';
+  refs.podium.innerHTML = '';
+  refs.remainingGrid.innerHTML = '';
+  runtime.decorativeSprites.clear();
 }
 
 function clearLobbySprites() {
@@ -118,12 +121,10 @@ function clearRaceSprites() {
   });
   runtime.raceSprites.clear();
   runtime.raceOrder = [];
-  refs.moreRacers.hidden = true;
-  refs.moreRacers.textContent = '';
 }
 
 function createLobbySprite(player) {
-  const random = mulberry32(hashString(player.id));
+  const random = CupcakeMotion.mulberry32(CupcakeMotion.hashString(player.id));
   const spriteEl = document.createElement('div');
   spriteEl.className = 'roaming-cake';
   spriteEl.dataset.playerId = player.id;
@@ -139,7 +140,8 @@ function createLobbySprite(player) {
     radiusWave: 18 + random() * 28,
     radiusSpeed: 0.65 + random() * 0.45,
     verticalScale: 0.62 + random() * 0.12,
-    bobPhase: random() * Math.PI * 2
+    bobPhase: random() * Math.PI * 2,
+    motion: CupcakeMotion.createProfile(player.id, 'idle')
   };
 }
 
@@ -167,7 +169,6 @@ function syncLobby(state) {
   refs.lobbyLayer.hidden = players.length === 0;
   refs.raceLayer.hidden = true;
   refs.resultsScreen.hidden = true;
-  refs.moreRacers.hidden = true;
   hidePlaceholder();
 
   runtime.lobbySprites.forEach((sprite, playerId) => {
@@ -185,13 +186,17 @@ function syncLobby(state) {
 }
 
 function createRaceSprite(entry) {
-  const lane = document.createElement('div');
+  const lane = document.createElement('article');
   lane.className = 'race-lane';
   lane.dataset.playerId = entry.playerId;
   lane.innerHTML = `
-    <div class="lane-position"></div>
+    <div class="lane-meta">
+      <span class="lane-position">${formatLaneNumber(entry.player)}</span>
+      <span class="lane-name">${entry.player.name}</span>
+    </div>
     <div class="lane-runway">
       <div class="lane-bg"></div>
+      <div class="lane-leader-chip">LEADING</div>
       <div class="racer">${generateCakeSVG(getCakeById(entry.player.cakeId))}</div>
     </div>
   `;
@@ -202,18 +207,47 @@ function createRaceSprite(entry) {
     playerId: entry.playerId,
     lane,
     positionLabel: lane.querySelector('.lane-position'),
+    nameLabel: lane.querySelector('.lane-name'),
     runway: lane.querySelector('.lane-runway'),
     racer: lane.querySelector('.racer'),
     localPosition: entry.distance,
     serverPosition: entry.distance,
     serverVelocity: entry.velocity,
     syncedAt: performance.now(),
-    phase: (hashString(entry.playerId) % 628) / 100
+    motion: CupcakeMotion.createProfile(entry.playerId, 'race')
   };
 }
 
+function syncDecorativeSprites(container, selector, mode) {
+  runtime.decorativeSprites.clear();
+
+  container.querySelectorAll(selector).forEach((element) => {
+    const seed = element.dataset.motionSeed || element.dataset.playerId || element.textContent || selector;
+    runtime.decorativeSprites.set(`${mode}:${seed}:${runtime.decorativeSprites.size}`, {
+      el: element,
+      subject: element.querySelector('.cupcake-motion-subject') || element.querySelector('svg'),
+      mode,
+      motion: CupcakeMotion.createProfile(seed, mode),
+      detailMotion: CupcakeMotion.createProfile(`${seed}:detail`, mode === 'card' ? 'podium' : mode)
+    });
+  });
+}
+
+function getRaceColumnCount(count) {
+  if (count <= 8) {
+    return 2;
+  }
+  if (count <= 18) {
+    return 3;
+  }
+  if (count <= 36) {
+    return 4;
+  }
+  return 5;
+}
+
 function syncRace(state) {
-  const round = state.rounds[state.currentRound];
+  const participants = getRaceParticipants(state);
 
   refs.trackContainer.classList.remove('free-roam');
   refs.hudQr.hidden = false;
@@ -223,22 +257,6 @@ function syncRace(state) {
   refs.raceLayer.hidden = false;
   refs.resultsScreen.hidden = true;
 
-  if (!round || !round.participants || round.participants.length === 0) {
-    clearRaceSprites();
-    setPlaceholder('WAITING FOR PLAYERS...');
-    return;
-  }
-
-  const participants = round.participants
-    .map((playerId) => ({
-      playerId,
-      player: state.players[playerId],
-      distance: round.positions[playerId] || 0,
-      velocity: round.velocities?.[playerId] || 0
-    }))
-    .filter((entry) => entry.player && !entry.player.eliminated && entry.player.visible)
-    .sort((a, b) => b.distance - a.distance);
-
   if (participants.length === 0) {
     clearRaceSprites();
     setPlaceholder('WAITING FOR PLAYERS...');
@@ -247,8 +265,7 @@ function syncRace(state) {
 
   hidePlaceholder();
 
-  const displayRacers = participants.slice(0, 10);
-  const desiredIds = new Set(displayRacers.map((entry) => entry.playerId));
+  const desiredIds = new Set(participants.map((entry) => entry.playerId));
 
   runtime.raceSprites.forEach((sprite, playerId) => {
     if (!desiredIds.has(playerId)) {
@@ -257,7 +274,21 @@ function syncRace(state) {
     }
   });
 
-  displayRacers.forEach((entry, index) => {
+  refs.raceLayer.style.gridTemplateColumns = `repeat(${getRaceColumnCount(participants.length)}, minmax(0, 1fr))`;
+
+  const rankingMap = buildRankingMap(
+    [...participants]
+      .sort((a, b) => b.distance - a.distance)
+      .map((entry) => ({ playerId: entry.playerId }))
+  );
+  const leaderId = participants.reduce((best, current) => {
+    if (!best || current.distance > best.distance) {
+      return current;
+    }
+    return best;
+  }, null)?.playerId;
+
+  participants.forEach((entry) => {
     let sprite = runtime.raceSprites.get(entry.playerId);
 
     if (!sprite) {
@@ -273,113 +304,139 @@ function syncRace(state) {
       sprite.localPosition = entry.distance;
     }
 
-    sprite.positionLabel.textContent = `#${index + 1}`;
-    sprite.lane.style.order = String(index);
-    sprite.lane.classList.toggle('leading', index === 0 && entry.distance > 0);
+    sprite.positionLabel.textContent = formatLaneNumber(entry.player);
+    sprite.nameLabel.textContent = entry.player.name;
+    sprite.lane.classList.toggle('leading', leaderId === entry.playerId && entry.distance > 0);
+    sprite.lane.dataset.rank = String(rankingMap.get(entry.playerId) || '');
   });
 
-  runtime.raceOrder = displayRacers.map((entry) => entry.playerId);
-
-  if (participants.length > displayRacers.length) {
-    refs.moreRacers.hidden = false;
-    refs.moreRacers.textContent = `+${participants.length - displayRacers.length} more racers`;
-  } else {
-    refs.moreRacers.hidden = true;
-    refs.moreRacers.textContent = '';
-  }
+  runtime.raceOrder = participants.map((entry) => entry.playerId);
 }
 
-function formatDistance(distance) {
-  return `${Math.max(0, Math.round((distance || 0) / 10))}m`;
+function createResultCard(player) {
+  return `
+    <article class="result-card" data-player-id="${player.id}">
+      <div class="result-card-cake cupcake-motion-shell" data-motion-seed="${player.id}">
+        <div class="cupcake-motion-subject">${generateCakeSVG(getCakeById(player.cakeId))}</div>
+      </div>
+      <span class="result-card-name">${player.name}</span>
+    </article>
+  `;
 }
 
-function getResultPayload(state) {
-  return state.lastResult || null;
-}
+function getTournamentStandings(state) {
+  const rounds = Object.entries(state.rounds || {})
+    .map(([roundNumber, round]) => ({ roundNumber: Number(roundNumber), round }))
+    .sort((a, b) => b.roundNumber - a.roundNumber);
+  const players = Object.values(state.players || {});
+  const playerProgress = new Map();
 
-function getBracketColumns(state) {
-  const targets = Array.isArray(state.roundTargets) && state.roundTargets.length > 0
-    ? state.roundTargets
-    : DEFAULT_BRACKET_COLUMNS;
+  players.forEach((player) => {
+    playerProgress.set(player.id, {
+      player,
+      furthestRound: player.currentRound || 1,
+      roundRank: Number.MAX_SAFE_INTEGER
+    });
+  });
 
-  return targets.map((size, index) => ({
-    round: index + 1,
-    size,
-    label: size === 1 ? 'WINNER' : `TOP ${size}`
-  }));
-}
-
-function renderQualifierCards(state, result) {
-  const winnerIds = new Set(result.winners || []);
-  const entries = (result.complete ? result.rankings : result.rankings.filter((entry) => winnerIds.has(entry.playerId)))
-    .map((entry, index) => {
-      const player = state.players[entry.playerId];
-
-      if (!player) {
-        return '';
+  rounds.forEach(({ roundNumber, round }) => {
+    (round.rankings || []).forEach((entry, index) => {
+      const progress = playerProgress.get(entry.playerId);
+      if (!progress) {
+        return;
       }
 
-      return `
-        <article class="qualifier-card ${winnerIds.has(entry.playerId) ? 'qualified' : 'eliminated'}">
-          <span class="qualifier-rank">#${index + 1}</span>
-          <div class="qualifier-cake">${generateCakeSVG(getCakeById(player.cakeId))}</div>
-          <div class="qualifier-meta">
-            <span class="qualifier-state">${winnerIds.has(entry.playerId) ? 'ADVANCES' : 'FINISHED'}</span>
-            <span class="qualifier-distance">${formatDistance(entry.distance)}</span>
-          </div>
-        </article>
-      `;
+      if (roundNumber >= progress.furthestRound) {
+        progress.furthestRound = roundNumber;
+        progress.roundRank = index;
+      }
+    });
+  });
+
+  return [...playerProgress.values()]
+    .sort((a, b) => {
+      if (b.furthestRound !== a.furthestRound) {
+        return b.furthestRound - a.furthestRound;
+      }
+
+      if (a.roundRank !== b.roundRank) {
+        return a.roundRank - b.roundRank;
+      }
+
+      return (a.player.laneIndex ?? 0) - (b.player.laneIndex ?? 0);
     })
+    .map((entry) => entry.player);
+}
+
+function renderRoundResults(state, result) {
+  const winnerIds = new Set(result?.winners || []);
+  const advancingPlayers = (result?.rankings || [])
+    .filter((entry) => winnerIds.has(entry.playerId))
+    .map((entry) => state.players[entry.playerId])
+    .filter(Boolean);
+  const cards = (result?.rankings || [])
+    .filter((entry) => winnerIds.has(entry.playerId))
+    .map((entry) => state.players[entry.playerId])
+    .filter(Boolean)
+    .map((player) => createResultCard(player))
     .join('');
 
-  refs.qualifierGrid.innerHTML = entries;
+  refs.roundResults.hidden = false;
+  refs.podiumScreen.hidden = true;
+  refs.resultsBoardHeading.textContent = 'ADVANCING CUPCAKES';
+  refs.resultsGrid.style.gridTemplateColumns = `repeat(${Math.min(8, Math.max(1, advancingPlayers.length))}, minmax(0, 1fr))`;
+  refs.resultsGrid.innerHTML = cards || '<p class="results-empty">Waiting for the next lineup.</p>';
+  syncDecorativeSprites(refs.resultsGrid, '.result-card-cake', 'card');
 }
 
-function getBracketIds(state, roundNumber) {
-  const round = state.rounds[roundNumber];
-  if (!round || !Array.isArray(round.winners)) {
-    return [];
+function renderCompleteResults(state) {
+  const standings = getTournamentStandings(state);
+  const podiumEntries = [];
+
+  if (standings[1]) {
+    podiumEntries.push({ player: standings[1], step: 'second', label: '2' });
   }
 
-  return round.winners;
-}
+  if (standings[0]) {
+    podiumEntries.push({ player: standings[0], step: 'first', label: '1' });
+  }
 
-function renderBracket(state) {
-  const columns = getBracketColumns(state);
-  refs.bracketGrid.style.gridTemplateColumns = `repeat(${columns.length}, minmax(0, 1fr))`;
-  refs.bracketGrid.innerHTML = columns.map((column) => {
-    const filledIds = getBracketIds(state, column.round);
-    const slots = Array.from({ length: column.size }, (_, index) => {
-      const playerId = filledIds[index];
-      const player = playerId ? state.players[playerId] : null;
+  if (standings[2]) {
+    podiumEntries.push({ player: standings[2], step: 'third', label: '3' });
+  }
 
-      if (!player) {
-        return `
-          <div class="bracket-slot empty">
-            <span class="bracket-slot-label">TBD</span>
-          </div>
-        `;
-      }
+  if (standings.length === 1) {
+    podiumEntries.length = 0;
+    podiumEntries.push({ player: standings[0], step: 'first', label: '1' });
+  }
 
-      return `
-        <div class="bracket-slot filled">
-          <div class="bracket-slot-cake">${generateCakeSVG(getCakeById(player.cakeId))}</div>
-          <span class="bracket-slot-label">#${index + 1}</span>
-        </div>
-      `;
-    }).join('');
+  refs.roundResults.hidden = true;
+  refs.podiumScreen.hidden = false;
 
-    return `
-      <section class="bracket-column ${filledIds.length > 0 ? 'resolved' : 'pending'}">
-        <div class="bracket-column-label">${column.label}</div>
-        <div class="bracket-column-slots">${slots}</div>
-      </section>
-    `;
-  }).join('');
+  refs.podium.innerHTML = podiumEntries.map((entry) => `
+    <article class="podium-slot podium-slot-${entry.step}">
+      <div class="podium-cake cupcake-motion-shell" data-motion-seed="${entry.player.id}">
+        <div class="cupcake-motion-subject">${generateCakeSVG(getCakeById(entry.player.cakeId))}</div>
+      </div>
+      <div class="podium-step">${entry.label}</div>
+      <div class="podium-name">${entry.player.name}</div>
+    </article>
+  `).join('');
+
+  refs.remainingGrid.innerHTML = standings.slice(3).map((player) => `
+    <article class="remaining-card">
+      <div class="remaining-cake cupcake-motion-shell" data-motion-seed="${player.id}">
+        <div class="cupcake-motion-subject">${generateCakeSVG(getCakeById(player.cakeId))}</div>
+      </div>
+      <span class="remaining-name">${player.name}</span>
+    </article>
+  `).join('');
+
+  syncDecorativeSprites(refs.podiumScreen, '.podium-cake, .remaining-cake', 'podium');
 }
 
 function syncResults(state) {
-  const result = getResultPayload(state);
+  const result = state.lastResult || null;
 
   refs.trackContainer.classList.remove('free-roam');
   refs.hudQr.hidden = true;
@@ -387,54 +444,32 @@ function syncResults(state) {
   refs.finishLine.hidden = true;
   refs.lobbyLayer.hidden = true;
   refs.raceLayer.hidden = true;
-  refs.moreRacers.hidden = true;
   refs.resultsScreen.hidden = false;
   hidePlaceholder();
 
-  if (!result) {
-    refs.resultsKicker.textContent = 'ROUND COMPLETE';
-    refs.resultsTitle.textContent = 'Leaderboard Locked';
-    refs.resultsSubtitle.textContent = 'Waiting for the next round.';
-    refs.resultsBoardHeading.textContent = 'QUALIFIERS';
-    refs.resultsChampion.hidden = true;
-    refs.qualifierGrid.innerHTML = '';
-    refs.bracketGrid.innerHTML = '';
+  if (state.status === 'complete') {
+    refs.resultsScreen.dataset.mode = 'complete';
+    refs.resultsKicker.textContent = 'RACE COMPLETE';
+    refs.resultsTitle.textContent = 'Cupcake Podium';
+    refs.resultsSubtitle.textContent = 'Top three up front. Everybody else below.';
+    renderCompleteResults(state);
     return;
   }
 
-  const championId = result.winner || state.rounds[4]?.winners?.[0] || null;
-  const champion = championId ? state.players[championId] : null;
-
-  refs.resultsKicker.textContent = result.complete
-    ? 'TOURNAMENT COMPLETE'
-    : `ROUND ${result.roundNumber} COMPLETE`;
-  refs.resultsTitle.textContent = result.complete
-    ? 'Champion Crowned'
-    : `${result.winners.length} Cakes Advance`;
-  refs.resultsSubtitle.textContent = result.complete
-    ? 'The final leaderboard is locked in.'
-    : `${result.winners.length} cakes move on to Round ${result.nextRound}.`;
-  refs.resultsBoardHeading.textContent = result.complete ? 'FINAL STANDINGS' : 'QUALIFIERS';
-
-  if (champion) {
-    refs.resultsChampion.hidden = false;
-    refs.resultsChampionCake.innerHTML = generateCakeSVG(getCakeById(champion.cakeId));
-  } else {
-    refs.resultsChampion.hidden = true;
-    refs.resultsChampionCake.innerHTML = '';
-  }
-
-  renderQualifierCards(state, result);
-  renderBracket(state);
+  refs.resultsScreen.dataset.mode = 'round';
+  refs.resultsKicker.textContent = result ? `ROUND ${result.roundNumber} COMPLETE` : 'ROUND COMPLETE';
+  refs.resultsTitle.textContent = result ? `${result.winners.length} Cupcakes Advance` : 'Round Locked';
+  refs.resultsSubtitle.textContent = result && result.nextRound
+    ? `The next round is ready: ${result.winners.length} cupcakes move on to Round ${result.nextRound}.`
+    : 'Waiting for the next start.';
+  renderRoundResults(state, result);
 }
 
 function applyState(state) {
   runtime.state = state;
   refs.roundNum.textContent = state.status === 'results'
-    ? state.lastResult?.roundNumber || state.currentRound || 1
+    ? state.lastResult?.nextRound || state.currentRound || 1
     : state.currentRound || 1;
-
-  hideWinner();
 
   if (state.status === 'waiting') {
     clearRaceSprites();
@@ -479,7 +514,8 @@ function updateHud() {
     const elapsed = Date.now() - round.startTime;
     const remaining = Math.max(0, ROUND_DURATION_SECONDS - Math.floor(elapsed / 1000));
     refs.timer.textContent = formatTimer(remaining);
-    refs.timerStatus.style.display = 'none';
+    refs.timerStatus.style.display = 'block';
+    refs.timerStatus.textContent = 'TAP TO RACE';
 
     if (remaining <= 5) {
       refs.timerBadge.classList.add('warning');
@@ -495,14 +531,14 @@ function updateHud() {
   if (state.status === 'results' && state.lastResult) {
     refs.timer.textContent = formatTimer(0);
     refs.timerStatus.style.display = 'block';
-    refs.timerStatus.textContent = `ROUND ${state.lastResult.roundNumber} RESULTS`;
+    refs.timerStatus.textContent = `ROUND ${state.lastResult.roundNumber} DONE`;
     return;
   }
 
   if (state.status === 'complete') {
     refs.timer.textContent = formatTimer(0);
     refs.timerStatus.style.display = 'block';
-    refs.timerStatus.textContent = 'CHAMPION DECLARED';
+    refs.timerStatus.textContent = 'FINAL PODIUM';
     return;
   }
 
@@ -510,7 +546,7 @@ function updateHud() {
   refs.timer.textContent = formatTimer(ROUND_DURATION_SECONDS);
   refs.timerStatus.style.display = 'block';
   refs.timerStatus.textContent = visiblePlayers > 0
-    ? `${visiblePlayers} ${visiblePlayers === 1 ? 'CAKE' : 'CAKES'} READY`
+    ? `${visiblePlayers} ${visiblePlayers === 1 ? 'CUPCAKE' : 'CUPCAKES'} READY`
     : 'SCAN TO JOIN';
 }
 
@@ -530,15 +566,15 @@ function animateLobby(now, dt) {
     const desiredRadius = Math.max(geometry.keepOutRadius + 36, sprite.baseRadius + radiusWave);
     const safeRadiusX = Math.max(geometry.keepOutRadius + 36, Math.min(desiredRadius, Math.min(geometry.centerX - 70, maxX - geometry.centerX + 30)));
     const safeRadiusY = Math.max(geometry.keepOutRadius * 0.68, Math.min(safeRadiusX * sprite.verticalScale, Math.min(geometry.centerY - 60, maxY - geometry.centerY + 20)));
-    const bob = Math.sin(now / 140 + sprite.bobPhase) * 5;
+    const motion = CupcakeMotion.computeTransform(sprite.motion, now, { intensity: 1 });
     const centerX = geometry.centerX + Math.cos(sprite.angle) * safeRadiusX;
-    const centerY = geometry.centerY + Math.sin(sprite.angle) * safeRadiusY + bob;
+    const centerY = geometry.centerY + Math.sin(sprite.angle) * safeRadiusY + motion.y;
     const direction = Math.cos(sprite.angle) >= 0 ? 1 : -1;
-    const tilt = Math.sin(sprite.angle) * 8;
+    const tilt = Math.sin(sprite.angle) * 8 + motion.rotate * 0.6;
     const x = Math.max(0, Math.min(maxX, centerX - 50));
     const y = Math.max(0, Math.min(maxY, centerY - 50));
 
-    sprite.el.style.transform = `translate3d(${x}px, ${y}px, 0) scaleX(${direction}) rotate(${tilt}deg)`;
+    sprite.el.style.transform = `translate3d(${x + motion.x}px, ${y}px, 0) scale(${motion.scaleX * direction}, ${motion.scaleY}) rotate(${tilt}deg)`;
     sprite.el.style.zIndex = String(10 + Math.round(y));
   });
 }
@@ -570,36 +606,43 @@ function animateRace(now, dt) {
       return;
     }
 
-    const runwayWidth = Math.max(0, sprite.runway.clientWidth - sprite.racer.clientWidth);
+    const runwayWidth = Math.max(0, sprite.runway.clientWidth - sprite.racer.clientWidth - 10);
     const progress = Math.min(0.985, sprite.localPosition / DISPLAY_TRACK_LENGTH);
     const x = runwayWidth * progress;
-    const bob = Math.sin(now / 95 + sprite.phase + index) * (1.5 + Math.min(4, sprite.serverVelocity / 220));
-    const lean = Math.max(-8, Math.min(10, sprite.serverVelocity / 75));
+    const motion = CupcakeMotion.computeTransform(sprite.motion, now, {
+      velocity: sprite.serverVelocity,
+      intensity: 0.8 + Math.min(0.45, sprite.serverVelocity / 380)
+    });
 
-    sprite.lane.classList.toggle('leading', index === 0 && sprite.localPosition > 0);
-    sprite.racer.style.transform = `translate3d(${x}px, ${bob}px, 0) rotate(${lean}deg)`;
+    sprite.racer.style.transform = `translate3d(${x + motion.x}px, ${motion.y}px, 0) rotate(${motion.rotate}deg) scale(${motion.scaleX}, ${motion.scaleY})`;
   });
 }
 
-function showWinner(state) {
-  const round = state.rounds[4] || state.rounds[state.currentRound];
-  if (!round || !round.winners || round.winners.length === 0) {
+function animateDecorativeCupcakes(now) {
+  if (runtime.decorativeSprites.size === 0) {
     return;
   }
 
-  const winnerId = round.winners[0];
-  if (!winnerId || runtime.winnerShownFor === winnerId) {
-    return;
-  }
+  runtime.decorativeSprites.forEach((sprite) => {
+    const context = sprite.mode === 'podium'
+      ? { intensity: 0.4, baseScale: 1 }
+      : sprite.mode === 'card'
+        ? { intensity: 0.32, baseScale: 1 }
+        : { intensity: 0.35, baseScale: 1 };
+    const detailContext = sprite.mode === 'podium'
+      ? { intensity: 1.45, baseScale: 1 }
+      : sprite.mode === 'card'
+        ? { intensity: 1.7, baseScale: 1.02 }
+        : { intensity: 1.15, baseScale: 1 };
+    const shellMotion = CupcakeMotion.computeTransform(sprite.motion, now, context);
+    const detailMotion = CupcakeMotion.computeTransform(sprite.detailMotion, now, detailContext);
 
-  const winner = state.players[winnerId];
-  if (!winner) {
-    return;
-  }
+    sprite.el.style.transform = `translate3d(${shellMotion.x}px, ${shellMotion.y}px, 0) rotate(${shellMotion.rotate * 0.35}deg)`;
 
-  refs.winnerCake.innerHTML = generateCakeSVG(getCakeById(winner.cakeId));
-  refs.winnerScreen.style.display = 'flex';
-  runtime.winnerShownFor = winnerId;
+    if (sprite.subject) {
+      sprite.subject.style.transform = `translate3d(${detailMotion.x}px, ${detailMotion.y}px, 0) rotate(${detailMotion.rotate}deg) scale(${detailMotion.scaleX}, ${detailMotion.scaleY})`;
+    }
+  });
 }
 
 function frame(now) {
@@ -612,6 +655,8 @@ function frame(now) {
     animateLobby(now, dt);
   } else if (runtime.state?.status === 'racing') {
     animateRace(now, dt);
+  } else if (runtime.state?.status === 'results' || runtime.state?.status === 'complete') {
+    animateDecorativeCupcakes(now);
   }
 
   window.requestAnimationFrame(frame);
@@ -638,7 +683,7 @@ async function pollState() {
 }
 
 function renderQRCode(elementId, size) {
-  const playUrl = `${window.location.origin}/race/play.html`;
+  const playUrl = `${window.location.origin}/race/play`;
   const element = document.getElementById(elementId);
 
   if (!element) {

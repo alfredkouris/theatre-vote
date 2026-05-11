@@ -7,12 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/race/styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="cakes.js"></script>
+  <script src="/race/cakes.js"></script>
+  <script src="/race/cupcake-motion.js"></script>
 </head>
 <body class="game-display">
-  <!-- Game HUD -->
   <div class="game-hud">
     <div class="hud-left">
       <div class="round-badge">
@@ -40,45 +40,36 @@
     </div>
   </div>
 
-  <!-- Racing Track -->
   <div class="racing-track">
     <div class="track-container" id="track-container">
       <div class="waiting-state" id="waiting-state">WAITING FOR PLAYERS...</div>
+
       <div class="lobby-hold" id="lobby-hold">
         <div class="lobby-qr-badge">
           <div id="qrcode"></div>
           <span class="lobby-qr-label">SCAN TO JOIN</span>
         </div>
       </div>
+
       <div class="lobby-layer" id="lobby-layer" aria-hidden="true"></div>
       <div class="race-layer" id="race-layer" aria-hidden="true"></div>
+
       <div class="results-screen" id="results-screen" hidden>
         <div class="results-kicker" id="results-kicker">ROUND COMPLETE</div>
-        <div class="results-header">
-          <div class="results-copy">
-            <h2 class="results-title" id="results-title">Leaderboard Locked</h2>
-            <p class="results-subtitle" id="results-subtitle">The next round lineup is ready.</p>
-          </div>
-          <div class="results-champion" id="results-champion" hidden>
-            <div class="results-champion-cake" id="results-champion-cake"></div>
-            <div class="results-champion-copy">
-              <span class="results-champion-label">Champion</span>
-              <span class="results-champion-text">Winner declared</span>
-            </div>
-          </div>
+        <h2 class="results-title" id="results-title">Round locked</h2>
+        <p class="results-subtitle" id="results-subtitle">Waiting for the next start.</p>
+
+        <div class="results-simple" id="round-results">
+          <div class="results-panel-heading" id="results-board-heading">ADVANCING CUPCAKES</div>
+          <div class="results-grid" id="results-grid"></div>
         </div>
-        <div class="results-layout">
-          <section class="results-panel">
-            <div class="results-panel-heading" id="results-board-heading">QUALIFIERS</div>
-            <div class="qualifier-grid" id="qualifier-grid"></div>
-          </section>
-          <section class="results-panel results-panel-bracket">
-            <div class="results-panel-heading">KNOCKOUT TREE</div>
-            <div class="bracket-grid" id="bracket-grid"></div>
-          </section>
+
+        <div class="podium-screen" id="podium-screen" hidden>
+          <div class="podium" id="podium"></div>
+          <div class="results-panel-heading">EVERYONE ELSE</div>
+          <div class="remaining-grid" id="remaining-grid"></div>
         </div>
       </div>
-      <div class="more-racers" id="more-racers" hidden></div>
     </div>
 
     <div class="finish-line-area">
@@ -87,19 +78,6 @@
     </div>
   </div>
 
-  <!-- Winner Screen -->
-  <div id="winner-screen" class="winner-screen" style="display: none;">
-    <div class="winner-fireworks">
-      <div class="firework"></div>
-      <div class="firework"></div>
-      <div class="firework"></div>
-    </div>
-    <div class="winner-content">
-      <h2 class="winner-title">WINNER!</h2>
-      <div id="winner-cake" class="winner-cake"></div>
-      <p id="winner-name" class="winner-name" hidden></p>
-    </div>
-  </div>
-  <script src="display.js"></script>
+  <script src="/race/display.js"></script>
 </body>
 </html>
