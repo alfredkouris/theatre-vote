@@ -10,8 +10,8 @@ app.use(express.static('public'));
 
 // In-memory vote storage
 let votes = {
-  agree: 0,
-  disagree: 0
+  julia: 0,
+  betty: 0
 };
 
 // Get current votes
@@ -23,7 +23,7 @@ app.get('/api/votes', (req, res) => {
 app.post('/api/vote', (req, res) => {
   const { vote } = req.body;
 
-  if (vote === 'agree' || vote === 'disagree') {
+  if (vote === 'julia' || vote === 'betty') {
     votes[vote]++;
     res.json({ success: true, votes });
   } else {
@@ -33,7 +33,7 @@ app.post('/api/vote', (req, res) => {
 
 // Reset votes (for testing)
 app.post('/api/reset', (req, res) => {
-  votes = { agree: 0, disagree: 0 };
+  votes = { julia: 0, betty: 0 };
   res.json({ success: true, votes });
 });
 

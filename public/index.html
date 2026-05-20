@@ -3,41 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Survey Display - Harry's Behaviour</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@1,400;1,700;1,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3">
+  <title>Survey Display - Best Chef</title>
+  <link rel="stylesheet" href="/styles.css?v=3">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="survey-body">
   <div class="survey-fullscreen">
-    <h1 class="survey-title">What do you think of Harry's behaviour?</h1>
+    <h1 class="survey-title">Who is the better chef?</h1>
 
     <div class="survey-content">
       <div class="column-graph">
         <div class="bars-container">
           <div class="bar-column">
-            <div class="column-bar-fill column-bar-agree" id="agree-bar"></div>
+            <div class="column-bar-fill column-bar-julia" id="julia-bar">
+              <div class="column-count" id="julia-count">0</div>
+            </div>
           </div>
           <div class="bar-column">
-            <div class="column-bar-fill column-bar-disagree" id="disagree-bar"></div>
+            <div class="column-bar-fill column-bar-betty" id="betty-bar">
+              <div class="column-count" id="betty-count">0</div>
+            </div>
           </div>
         </div>
         <div class="labels-container">
-          <div class="label-group">
-            <div class="column-count" id="agree-count">0</div>
-            <div class="column-label">Agree</div>
-          </div>
-          <div class="label-group">
-            <div class="column-count" id="disagree-count">0</div>
-            <div class="column-label">Disagree</div>
-          </div>
+          <div class="column-label">Julia Child</div>
+          <div class="column-label">Betty Crocker</div>
         </div>
       </div>
 
       <div class="qr-container">
         <div id="qrcode"></div>
+      </div>
+    </div>
+
+    <div class="images-row">
+      <div class="display-image-wrapper">
+        <img src="/julia-child.jpg" alt="Julia Child" class="display-chef-image">
+      </div>
+      <div class="display-image-wrapper">
+        <img src="/betty%20crocker.jpg" alt="Betty Crocker" class="display-chef-image">
       </div>
     </div>
   </div>
@@ -46,7 +50,7 @@
     const surveyUrl = `${window.location.origin}/survey/vote`;
     let clickCount = 0;
     let clickTimer = null;
-    let previousVotes = { agree: 0, disagree: 0 };
+    let previousVotes = { julia: 0, betty: 0 };
 
     function renderQrCode() {
       const qrContainer = document.getElementById('qrcode');
@@ -62,33 +66,33 @@
     }
 
     function updateDisplay(votes) {
-      const agree = Number(votes.agree) || 0;
-      const disagree = Number(votes.disagree) || 0;
-      const total = agree + disagree;
-      const agreePercent = total === 0 ? 50 : Math.round((agree / total) * 100);
-      const disagreePercent = total === 0 ? 50 : 100 - agreePercent;
+      const julia = Number(votes.julia) || 0;
+      const betty = Number(votes.betty) || 0;
+      const total = julia + betty;
+      const juliaPercent = total === 0 ? 0 : Math.round((julia / total) * 100);
+      const bettyPercent = total === 0 ? 0 : 100 - juliaPercent;
 
-      const hasChanged = agree !== previousVotes.agree || disagree !== previousVotes.disagree;
+      const hasChanged = julia !== previousVotes.julia || betty !== previousVotes.betty;
 
-      document.getElementById('agree-count').textContent = agree;
-      document.getElementById('disagree-count').textContent = disagree;
+      document.getElementById('julia-count').textContent = julia;
+      document.getElementById('betty-count').textContent = betty;
 
-      const agreeBar = document.getElementById('agree-bar');
-      const disagreeBar = document.getElementById('disagree-bar');
+      const juliaBar = document.getElementById('julia-bar');
+      const bettyBar = document.getElementById('betty-bar');
 
-      agreeBar.style.height = `${agreePercent}%`;
-      disagreeBar.style.height = `${disagreePercent}%`;
+      juliaBar.style.height = `${juliaPercent}%`;
+      bettyBar.style.height = `${bettyPercent}%`;
 
       if (hasChanged) {
-        agreeBar.classList.add('animate');
-        disagreeBar.classList.add('animate');
+        juliaBar.classList.add('animate');
+        bettyBar.classList.add('animate');
 
         setTimeout(() => {
-          agreeBar.classList.remove('animate');
-          disagreeBar.classList.remove('animate');
+          juliaBar.classList.remove('animate');
+          bettyBar.classList.remove('animate');
         }, 600);
 
-        previousVotes = { agree, disagree };
+        previousVotes = { julia, betty };
       }
     }
 

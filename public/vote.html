@@ -3,18 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vote - Harry's Behaviour</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@1,400;1,700;1,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3">
+  <title>Vote - Best Chef</title>
+  <link rel="stylesheet" href="/styles.css?v=3">
   <style>
     body.vote-body {
-      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+      background: url('/bg.jpg') center center / cover no-repeat fixed;
       margin: 0;
       padding: 0;
       min-height: 100vh;
-      font-family: 'EB Garamond', Georgia, serif;
+      font-family: 'Bodoni 72', 'Bodoni MT', serif;
+      font-style: italic;
     }
     .vote-fullscreen {
       width: 100vw;
@@ -28,55 +26,134 @@
       gap: 60px;
     }
     .vote-title {
-      font-family: 'EB Garamond', Georgia, serif;
+      font-family: 'Bodoni 72', 'Bodoni MT', serif;
       font-size: 56px;
       font-weight: 800;
       font-style: italic;
       text-transform: uppercase;
       letter-spacing: 2px;
       text-align: center;
-      color: #ffffff;
-      text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+      color: #000000;
+      text-shadow: 2px 2px 2px rgba(255, 255, 255, 0.5);
       max-width: 900px;
     }
-    .harry-image {
-      max-width: 300px;
-      max-height: 300px;
-      border: 4px solid #ffffff;
+    .chef-images-container {
+      display: flex;
+      gap: 60px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .chef-image-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .chef-image {
+      width: 300px;
+      height: 300px;
+      border: 8px solid #ffffff;
       border-radius: 8px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
       object-fit: cover;
-      animation: titter 0.3s ease-in-out infinite alternate;
     }
-    @keyframes titter {
-      0% {
-        transform: rotate(-2deg);
-      }
-      100% {
-        transform: rotate(2deg);
-      }
+    .chef-name {
+      font-family: 'Bodoni 72', 'Bodoni MT', serif;
+      font-size: 32px;
+      font-weight: 700;
+      font-style: italic;
+      color: #000000;
+      text-shadow: 2px 2px 2px rgba(255, 255, 255, 0.5);
+    }
+    .vote-button-container {
+      display: flex;
+      gap: 40px;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
+    .vote-button {
+      font-family: 'Bodoni 72', 'Bodoni MT', serif;
+      font-size: 42px;
+      font-weight: 700;
+      font-style: italic;
+      padding: 40px 80px;
+      border: 4px solid #000;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.2), 0 8px 16px rgba(0, 0, 0, 0.5);
+      color: #000000;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+    }
+    .vote-button:hover {
+      transform: translateY(-5px);
+      box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.3), 0 12px 24px rgba(0, 0, 0, 0.6);
+    }
+    .vote-button:active {
+      transform: translateY(-2px);
+      box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.2), 0 6px 12px rgba(0, 0, 0, 0.5);
+    }
+    .vote-button-julia {
+      background: linear-gradient(180deg, #F5E6D3 0%, #E8D5C4 100%);
+    }
+    .vote-button-betty {
+      background: linear-gradient(180deg, #E0E0E0 0%, #C8C8C8 100%);
+    }
+    .vote-thank-you {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .vote-thank-you h2 {
+      font-family: 'Bodoni 72', 'Bodoni MT', serif;
+      font-size: 64px;
+      font-weight: 800;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #000000;
+      text-shadow: 2px 2px 2px rgba(255, 255, 255, 0.5);
+      margin: 0;
+    }
+    .vote-thank-you p {
+      font-family: 'Bodoni 72', 'Bodoni MT', serif;
+      font-size: 32px;
+      font-style: italic;
+      color: #000000;
+      text-shadow: 2px 2px 2px rgba(255, 255, 255, 0.5);
+      margin: 0;
     }
     @media (max-width: 900px) {
       .vote-fullscreen {
         padding: 20px;
         gap: 30px;
       }
-      .harry-image {
-        max-width: 200px;
-        max-height: 200px;
+      .chef-images-container {
+        gap: 30px;
+      }
+      .chef-image {
+        width: 250px;
+        height: 250px;
+      }
+      .chef-name {
+        font-size: 28px;
       }
       .vote-title {
-        font-size: 36px;
+        font-size: 32px;
         letter-spacing: 1px;
       }
       .vote-button-container {
         flex-direction: column !important;
-        gap: 20px;
+        gap: 12px;
         width: 100%;
       }
       .vote-button {
-        font-size: 32px;
-        padding: 30px 40px;
+        font-size: 20px;
+        padding: 15px 25px;
         width: 100%;
         max-width: none;
       }
@@ -90,19 +167,29 @@
     @media (max-width: 480px) {
       .vote-fullscreen {
         padding: 15px;
-        gap: 20px;
+        gap: 15px;
       }
-      .harry-image {
-        max-width: 150px;
-        max-height: 150px;
+      .chef-images-container {
+        gap: 15px;
+      }
+      .chef-image {
+        width: 160px;
+        height: 160px;
+      }
+      .chef-name {
+        font-size: 20px;
       }
       .vote-title {
-        font-size: 28px;
+        font-size: 22px;
         letter-spacing: 0.5px;
       }
+      .vote-button-container {
+        gap: 8px;
+      }
       .vote-button {
-        font-size: 24px;
-        padding: 25px 30px;
+        font-size: 20px;
+        padding: 10px;
+        letter-spacing: 1px;
       }
       .vote-thank-you h2 {
         font-size: 36px;
@@ -111,78 +198,26 @@
         font-size: 20px;
       }
     }
-    .vote-button-container {
-      display: flex;
-      gap: 40px;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-    }
-    .vote-button {
-      font-family: 'EB Garamond', Georgia, serif;
-      font-size: 42px;
-      font-weight: 700;
-      font-style: italic;
-      padding: 40px 80px;
-      border: 4px solid #000;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      transition: all 0.3s ease;
-      box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.2), 0 8px 16px rgba(0, 0, 0, 0.5);
-      color: #ffffff;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-    }
-    .vote-button:hover {
-      transform: translateY(-5px);
-      box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.3), 0 12px 24px rgba(0, 0, 0, 0.6);
-    }
-    .vote-button:active {
-      transform: translateY(-2px);
-      box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.2), 0 6px 12px rgba(0, 0, 0, 0.5);
-    }
-    .vote-button-agree {
-      background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
-    }
-    .vote-button-disagree {
-      background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
-    }
-    .vote-thank-you {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-    }
-    .vote-thank-you h2 {
-      font-family: 'EB Garamond', Georgia, serif;
-      font-size: 64px;
-      font-weight: 800;
-      font-style: italic;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: #ffffff;
-      text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
-      margin: 0;
-    }
-    .vote-thank-you p {
-      font-family: 'EB Garamond', Georgia, serif;
-      font-size: 32px;
-      font-style: italic;
-      color: #cccccc;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-      margin: 0;
-    }
   </style>
 </head>
 <body class="vote-body">
   <div class="vote-fullscreen">
-    <img src="angry-harry.png" alt="Harry" class="harry-image">
+    <h1 class="vote-title">Who is the better chef?</h1>
 
-    <h1 class="vote-title">What do you think of Harry's behaviour?</h1>
+    <div class="chef-images-container">
+      <div class="chef-image-wrapper">
+        <img src="/julia-child.jpg" alt="Julia Child" class="chef-image">
+        <div class="chef-name">Julia Child</div>
+      </div>
+      <div class="chef-image-wrapper">
+        <img src="/betty%20crocker.jpg" alt="Betty Crocker" class="chef-image">
+        <div class="chef-name">Betty Crocker</div>
+      </div>
+    </div>
 
     <div id="vote-buttons" class="vote-button-container">
-      <button class="vote-button vote-button-agree" onclick="vote('agree')">Agree</button>
-      <button class="vote-button vote-button-disagree" onclick="vote('disagree')">Disagree</button>
+      <button class="vote-button vote-button-julia" onclick="vote('julia')">Julia Child</button>
+      <button class="vote-button vote-button-betty" onclick="vote('betty')">Betty Crocker</button>
     </div>
 
     <div id="thank-you" class="vote-thank-you" style="display: none;">
