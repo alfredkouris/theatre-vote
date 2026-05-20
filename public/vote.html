@@ -4,19 +4,189 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vote - Harry's Behaviour</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@1,400;1,700;1,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=3">
+  <style>
+    body.vote-body {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: 'EB Garamond', Georgia, serif;
+    }
+    .vote-fullscreen {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      box-sizing: border-box;
+      gap: 60px;
+    }
+    .vote-title {
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 56px;
+      font-weight: 800;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-align: center;
+      color: #ffffff;
+      text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+      max-width: 900px;
+    }
+    .harry-image {
+      max-width: 300px;
+      max-height: 300px;
+      border: 4px solid #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+      object-fit: cover;
+      animation: titter 0.3s ease-in-out infinite alternate;
+    }
+    @keyframes titter {
+      0% {
+        transform: rotate(-2deg);
+      }
+      100% {
+        transform: rotate(2deg);
+      }
+    }
+    @media (max-width: 900px) {
+      .vote-fullscreen {
+        padding: 20px;
+        gap: 30px;
+      }
+      .harry-image {
+        max-width: 200px;
+        max-height: 200px;
+      }
+      .vote-title {
+        font-size: 36px;
+        letter-spacing: 1px;
+      }
+      .vote-button-container {
+        flex-direction: column !important;
+        gap: 20px;
+        width: 100%;
+      }
+      .vote-button {
+        font-size: 32px;
+        padding: 30px 40px;
+        width: 100%;
+        max-width: none;
+      }
+      .vote-thank-you h2 {
+        font-size: 48px;
+      }
+      .vote-thank-you p {
+        font-size: 24px;
+      }
+    }
+    @media (max-width: 480px) {
+      .vote-fullscreen {
+        padding: 15px;
+        gap: 20px;
+      }
+      .harry-image {
+        max-width: 150px;
+        max-height: 150px;
+      }
+      .vote-title {
+        font-size: 28px;
+        letter-spacing: 0.5px;
+      }
+      .vote-button {
+        font-size: 24px;
+        padding: 25px 30px;
+      }
+      .vote-thank-you h2 {
+        font-size: 36px;
+      }
+      .vote-thank-you p {
+        font-size: 20px;
+      }
+    }
+    .vote-button-container {
+      display: flex;
+      gap: 40px;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
+    .vote-button {
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 42px;
+      font-weight: 700;
+      font-style: italic;
+      padding: 40px 80px;
+      border: 4px solid #000;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.2), 0 8px 16px rgba(0, 0, 0, 0.5);
+      color: #ffffff;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    }
+    .vote-button:hover {
+      transform: translateY(-5px);
+      box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.3), 0 12px 24px rgba(0, 0, 0, 0.6);
+    }
+    .vote-button:active {
+      transform: translateY(-2px);
+      box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.2), 0 6px 12px rgba(0, 0, 0, 0.5);
+    }
+    .vote-button-agree {
+      background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
+    }
+    .vote-button-disagree {
+      background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
+    }
+    .vote-thank-you {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .vote-thank-you h2 {
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 64px;
+      font-weight: 800;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #ffffff;
+      text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+      margin: 0;
+    }
+    .vote-thank-you p {
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 32px;
+      font-style: italic;
+      color: #cccccc;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+      margin: 0;
+    }
+  </style>
 </head>
-<body>
-  <div class="vote-container">
-    <h1>What did you think of Harry's behaviour?</h1>
+<body class="vote-body">
+  <div class="vote-fullscreen">
+    <img src="angry-harry.png" alt="Harry" class="harry-image">
 
-    <div id="vote-buttons" class="button-container">
-      <button class="vote-btn agree-btn" onclick="vote('agree')">AGREE</button>
-      <button class="vote-btn disagree-btn" onclick="vote('disagree')">DISAGREE</button>
+    <h1 class="vote-title">What do you think of Harry's behaviour?</h1>
+
+    <div id="vote-buttons" class="vote-button-container">
+      <button class="vote-button vote-button-agree" onclick="vote('agree')">Agree</button>
+      <button class="vote-button vote-button-disagree" onclick="vote('disagree')">Disagree</button>
     </div>
 
-    <div id="thank-you" class="thank-you" style="display: none;">
-      <h2>Thank you for voting</h2>
+    <div id="thank-you" class="vote-thank-you" style="display: none;">
+      <h2>Thank you</h2>
       <p>Your response has been recorded</p>
     </div>
   </div>
@@ -34,7 +204,7 @@
 
         if (response.ok) {
           document.getElementById('vote-buttons').style.display = 'none';
-          document.getElementById('thank-you').style.display = 'block';
+          document.getElementById('thank-you').style.display = 'flex';
         }
       } catch (error) {
         console.error('Error submitting vote:', error);

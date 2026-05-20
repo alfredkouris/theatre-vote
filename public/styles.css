@@ -4,7 +4,7 @@
   box-sizing: border-box;
 }
 
-body {
+body:not(.vote-body):not(.survey-body) {
   font-family: 'Courier New', monospace;
   background: linear-gradient(135deg, #e8e8e8 0%, #f5f5f5 100%);
   color: #2a2a2a;
@@ -195,92 +195,275 @@ body {
 }
 
 /* Vote Page */
-.vote-container {
-  max-width: 600px;
-  width: 90vw;
-  padding: 60px 40px;
-  background: #ffffff;
-  border: 3px solid #c0c0c0;
-  border-right: 4px solid #a0a0a0;
-  border-bottom: 4px solid #a0a0a0;
-  box-shadow:
-    0 0 0 1px #d0d0d0,
-    8px 8px 0 rgba(0, 0, 0, 0.1);
-  text-align: center;
+body.vote-body {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%) !important;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: block;
 }
 
-.vote-container h1 {
-  font-size: 28px;
-  font-weight: bold;
-  margin-bottom: 50px;
+.vote-fullscreen {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  box-sizing: border-box;
+  gap: 60px;
+}
+
+.vote-title {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 56px;
+  font-weight: 800;
+  font-style: italic;
   text-transform: uppercase;
   letter-spacing: 2px;
-  line-height: 1.4;
-  border-bottom: 3px solid #2a2a2a;
-  padding-bottom: 20px;
+  text-align: center;
+  color: #ffffff;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  max-width: 900px;
 }
 
-.button-container {
+.vote-button-container {
   display: flex;
-  gap: 20px;
-  flex-direction: column;
+  gap: 40px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 }
 
-.vote-btn {
-  font-family: 'Courier New', monospace;
-  font-size: 24px;
-  font-weight: bold;
-  padding: 30px;
-  border: none;
+.vote-button {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 42px;
+  font-weight: 700;
+  font-style: italic;
+  padding: 40px 80px;
+  border: 4px solid #000;
   cursor: pointer;
   text-transform: uppercase;
-  letter-spacing: 3px;
-  transition: all 0.15s ease;
+  letter-spacing: 2px;
+  transition: all 0.3s ease;
   box-shadow:
-    0 0 0 2px #1a1a1a,
-    4px 4px 0 rgba(0, 0, 0, 0.3);
+    inset 0 4px 8px rgba(255, 255, 255, 0.2),
+    0 8px 16px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
 }
 
-.vote-btn:active {
-  transform: translate(2px, 2px);
+.vote-button:hover {
+  transform: translateY(-5px);
   box-shadow:
-    0 0 0 2px #1a1a1a,
-    2px 2px 0 rgba(0, 0, 0, 0.3);
+    inset 0 4px 8px rgba(255, 255, 255, 0.3),
+    0 12px 24px rgba(0, 0, 0, 0.6);
 }
 
-.agree-btn {
-  background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
-  color: white;
+.vote-button:active {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 4px 8px rgba(255, 255, 255, 0.2),
+    0 6px 12px rgba(0, 0, 0, 0.5);
 }
 
-.agree-btn:hover {
-  background: linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%);
+.vote-button-agree {
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
 }
 
-.disagree-btn {
-  background: linear-gradient(180deg, #666666 0%, #4a4a4a 100%);
-  color: white;
+.vote-button-disagree {
+  background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
 }
 
-.disagree-btn:hover {
-  background: linear-gradient(180deg, #777777 0%, #5a5a5a 100%);
+.vote-thank-you {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
-.thank-you {
-  padding: 40px 0;
-}
-
-.thank-you h2 {
-  font-size: 32px;
-  margin-bottom: 20px;
+.vote-thank-you h2 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 64px;
+  font-weight: 800;
+  font-style: italic;
   text-transform: uppercase;
   letter-spacing: 2px;
+  color: #ffffff;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  margin: 0;
 }
 
-.thank-you p {
-  font-size: 18px;
-  color: #666;
+.vote-thank-you p {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 32px;
+  font-style: italic;
+  color: #cccccc;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  margin: 0;
+}
+
+/* Survey Fullscreen Display */
+body.survey-body {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%) !important;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: block;
+}
+
+.survey-fullscreen {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 60px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.survey-title {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 72px;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  margin: 0 0 60px 0;
+  color: #ffffff;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  border-bottom: 4px solid #ffffff;
+  padding-bottom: 30px;
+}
+
+.survey-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  position: relative;
+  width: 100%;
+}
+
+.column-graph {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+.bars-container {
+  display: flex;
+  gap: 100px;
+  align-items: flex-end;
+  height: 500px;
+  justify-content: center;
+}
+
+.bar-column {
+  width: 200px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.column-bar-fill {
+  width: 100%;
+  height: 0;
+  transition: height 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  border: 3px solid #000;
+  box-shadow:
+    inset 0 4px 8px rgba(255, 255, 255, 0.2),
+    0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.column-bar-fill.animate {
+  animation: pulse 0.6s ease;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.05);
+  }
+}
+
+.column-bar-agree {
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
+}
+
+.column-bar-disagree {
+  background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
+}
+
+.labels-container {
+  display: flex;
+  gap: 100px;
+  justify-content: center;
+}
+
+.label-group {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.column-count {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 48px;
+  font-weight: 700;
+  font-style: italic;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.column-label {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 28px;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
   letter-spacing: 1px;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.qr-container {
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#qrcode {
+  background: white;
+  padding: 20px;
+  border: 4px solid #ffffff;
+  box-shadow:
+    0 0 0 2px #000,
+    0 8px 16px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+#qrcode:hover {
+  transform: scale(1.02);
+}
+
+#qrcode:active {
+  transform: scale(0.98);
+}
+
+#qrcode img {
+  display: block;
 }
 
 /* Mobile responsiveness */
@@ -293,19 +476,118 @@ body {
   .qr-section h1 {
     font-size: 18px;
   }
+
+  .survey-fullscreen {
+    padding: 20px 30px;
+  }
+
+  .survey-title {
+    font-size: 36px;
+    margin-bottom: 30px;
+  }
+
+  .survey-content {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .bars-container {
+    height: 400px;
+    gap: 60px;
+  }
+
+  .bar-column {
+    width: 120px;
+  }
+
+  .labels-container {
+    gap: 60px;
+  }
+
+  .label-group {
+    width: 120px;
+  }
+
+  .column-count {
+    font-size: 32px;
+  }
+
+  .column-label {
+    font-size: 20px;
+  }
+
+  .vote-title {
+    font-size: 42px;
+  }
+
+  .vote-button-container {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .vote-button {
+    font-size: 32px;
+    padding: 35px 60px;
+  }
 }
 
 @media (max-width: 600px) {
-  .vote-container {
-    padding: 40px 20px;
+  .survey-title {
+    font-size: 28px;
+    letter-spacing: 2px;
   }
 
-  .vote-container h1 {
-    font-size: 20px;
+  .bars-container {
+    gap: 40px;
+    height: 300px;
   }
 
-  .vote-btn {
-    font-size: 20px;
-    padding: 25px;
+  .bar-column {
+    width: 100px;
+  }
+
+  .labels-container {
+    gap: 40px;
+  }
+
+  .label-group {
+    width: 100px;
+  }
+
+  .column-count {
+    font-size: 28px;
+  }
+
+  .column-label {
+    font-size: 16px;
+  }
+
+  .vote-fullscreen {
+    padding: 20px;
+    gap: 40px;
+  }
+
+  .vote-title {
+    font-size: 32px;
+  }
+
+  .vote-button-container {
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .vote-button {
+    font-size: 28px;
+    padding: 30px 50px;
+    width: 100%;
+  }
+
+  .vote-thank-you h2 {
+    font-size: 42px;
+  }
+
+  .vote-thank-you p {
+    font-size: 24px;
   }
 }

@@ -4,57 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Survey Display - Harry's Behaviour</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@1,400;1,700;1,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=3">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body>
-  <div class="display-container">
-    <section class="qr-section">
-      <h1>What did you think of Harry's behaviour?</h1>
-      <div id="qrcode"></div>
-      <div class="vote-url" id="vote-url"></div>
-    </section>
+<body class="survey-body">
+  <div class="survey-fullscreen">
+    <h1 class="survey-title">What do you think of Harry's behaviour?</h1>
 
-    <section class="graph-section">
-      <div class="vote-counts">
-        <article class="count-item">
-          <span class="label">Agree</span>
-          <span class="value" id="agree-count">0</span>
-        </article>
-        <article class="count-item">
-          <span class="label">Disagree</span>
-          <span class="value" id="disagree-count">0</span>
-        </article>
-      </div>
-
-      <div class="survey-bars">
-        <div class="survey-bar-card">
-          <div class="survey-bar-label-row">
-            <span>Agree</span>
-            <span id="agree-percent">0%</span>
+    <div class="survey-content">
+      <div class="column-graph">
+        <div class="bars-container">
+          <div class="bar-column">
+            <div class="column-bar-fill column-bar-agree" id="agree-bar"></div>
           </div>
-          <div class="survey-bar-track">
-            <div class="survey-bar-fill survey-bar-fill-agree" id="agree-bar"></div>
+          <div class="bar-column">
+            <div class="column-bar-fill column-bar-disagree" id="disagree-bar"></div>
           </div>
         </div>
-
-        <div class="survey-bar-card">
-          <div class="survey-bar-label-row">
-            <span>Disagree</span>
-            <span id="disagree-percent">0%</span>
+        <div class="labels-container">
+          <div class="label-group">
+            <div class="column-count" id="agree-count">0</div>
+            <div class="column-label">Agree</div>
           </div>
-          <div class="survey-bar-track">
-            <div class="survey-bar-fill survey-bar-fill-disagree" id="disagree-bar"></div>
+          <div class="label-group">
+            <div class="column-count" id="disagree-count">0</div>
+            <div class="column-label">Disagree</div>
           </div>
         </div>
       </div>
 
-      <button class="reset-btn" id="reset-btn" type="button">Reset Survey</button>
-    </section>
+      <div class="qr-container">
+        <div id="qrcode"></div>
+      </div>
+    </div>
   </div>
 
   <script>
     const surveyUrl = `${window.location.origin}/survey/vote`;
+    let clickCount = 0;
+    let clickTimer = null;
+    let previousVotes = { agree: 0, disagree: 0 };
 
     function renderQrCode() {
       const qrContainer = document.getElementById('qrcode');
@@ -62,28 +54,42 @@
 
       new QRCode(qrContainer, {
         text: surveyUrl,
-        width: 240,
-        height: 240,
+        width: 200,
+        height: 200,
         colorDark: '#111111',
         colorLight: '#ffffff'
       });
-
-      document.getElementById('vote-url').textContent = surveyUrl.replace(/^https?:\/\//, '');
     }
 
     function updateDisplay(votes) {
       const agree = Number(votes.agree) || 0;
       const disagree = Number(votes.disagree) || 0;
       const total = agree + disagree;
-      const agreePercent = total === 0 ? 0 : Math.round((agree / total) * 100);
-      const disagreePercent = total === 0 ? 0 : 100 - agreePercent;
+      const agreePercent = total === 0 ? 50 : Math.round((agree / total) * 100);
+      const disagreePercent = total === 0 ? 50 : 100 - agreePercent;
+
+      const hasChanged = agree !== previousVotes.agree || disagree !== previousVotes.disagree;
 
       document.getElementById('agree-count').textContent = agree;
       document.getElementById('disagree-count').textContent = disagree;
-      document.getElementById('agree-percent').textContent = `${agreePercent}%`;
-      document.getElementById('disagree-percent').textContent = `${disagreePercent}%`;
-      document.getElementById('agree-bar').style.width = `${agreePercent}%`;
-      document.getElementById('disagree-bar').style.width = `${disagreePercent}%`;
+
+      const agreeBar = document.getElementById('agree-bar');
+      const disagreeBar = document.getElementById('disagree-bar');
+
+      agreeBar.style.height = `${agreePercent}%`;
+      disagreeBar.style.height = `${disagreePercent}%`;
+
+      if (hasChanged) {
+        agreeBar.classList.add('animate');
+        disagreeBar.classList.add('animate');
+
+        setTimeout(() => {
+          agreeBar.classList.remove('animate');
+          disagreeBar.classList.remove('animate');
+        }, 600);
+
+        previousVotes = { agree, disagree };
+      }
     }
 
     async function fetchVotes() {
@@ -105,7 +111,22 @@
       }
     }
 
-    document.getElementById('reset-btn').addEventListener('click', resetVotes);
+    document.getElementById('qrcode').addEventListener('click', () => {
+      clickCount++;
+
+      if (clickTimer) {
+        clearTimeout(clickTimer);
+      }
+
+      if (clickCount === 3) {
+        resetVotes();
+        clickCount = 0;
+      } else {
+        clickTimer = setTimeout(() => {
+          clickCount = 0;
+        }, 500);
+      }
+    });
 
     renderQrCode();
     fetchVotes();
