@@ -182,34 +182,59 @@
       }
 
       .slot-picker {
-        max-height: 220px;
+        max-height: 340px;
         overflow-y: auto;
-        padding: 12px 0 0;
+        padding: 12px 0;
         border-top: 1px solid rgba(17, 17, 17, 0.14);
         border-bottom: 1px solid rgba(17, 17, 17, 0.14);
         scrollbar-width: thin;
       }
 
-      .slot-picker-label {
-        margin: 0 0 10px;
-        font-size: 12px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
+      .slot-groups {
+        display: grid;
+        gap: 14px;
+      }
+
+      .slot-row {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+
+      .slot-day {
+        font-size: 16px;
+        line-height: 1.4;
+        padding-top: 8px;
+        position: sticky;
+        top: 0;
+        align-self: start;
+        background: #f8f6f1;
+        z-index: 1;
+      }
+
+      .slot-times {
+        padding-left: 18px;
+        border-left: 1px solid rgba(17, 17, 17, 0.18);
       }
 
       .slot-grid {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: 1fr;
         gap: 10px;
-        align-items: flex-start;
+        align-items: start;
+        justify-items: center;
       }
 
       .slot-button {
-        text-align: left;
-        padding: 10px 14px;
+        text-align: center;
+        padding: 9px 14px;
         min-height: 0;
         font-size: 15px;
         line-height: 1.2;
+        width: min(100%, 260px);
+        justify-content: center;
+        border-radius: 14px;
       }
 
       .slot-button.is-selected {
@@ -295,6 +320,21 @@
         .pack-preview {
           height: 360px;
         }
+
+        .slot-row {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        .slot-day {
+          padding-top: 0;
+          position: static;
+        }
+
+        .slot-times {
+          padding-left: 0;
+          border-left: 0;
+        }
       }
     </style>
   </head>
@@ -309,14 +349,6 @@
         <h1>Voiceover Audition Booking</h1>
         <p class="intro">Join part of theatre history.</p>
       </header>
-
-      <section class="copy">
-        <p>
-          The role or roles are available for performers of any age, gender and
-          cultural background. We are looking for voiceover artists with a
-          natural tone. These are everyday people, not to be overplayed.
-        </p>
-      </section>
 
       <section id="register-step">
         <h2 class="section-title">Step 1: Register</h2>
@@ -356,13 +388,8 @@
         <div class="step-stack">
           <div id="slots-panel" class="slots-panel">
             <h2 class="section-title">Step 2: Pick A Time</h2>
-            <p id="window-copy" class="window-copy">
-              Available audition times will appear here.
-            </p>
-
             <div class="slot-picker">
-              <p class="slot-picker-label">Tap a time</p>
-              <div id="slot-grid" class="slot-grid"></div>
+              <div id="slot-grid" class="slot-groups"></div>
             </div>
 
             <div class="selection-row">
@@ -375,7 +402,6 @@
 
           <div class="pack-section">
             <h2 class="section-title">Step 3: Audition Pack</h2>
-            <p class="step-copy">Your watermarked audition pack is below.</p>
             <div class="pack-toolbar">
               <a
                 id="pack-download-button"
@@ -413,7 +439,6 @@
       const bookButton = document.getElementById("book-button");
       const selectedCopy = document.getElementById("selected-copy");
       const confirmationBox = document.getElementById("confirmation");
-      const windowCopy = document.getElementById("window-copy");
       const nameInput = document.getElementById("name");
       const emailInput = document.getElementById("email");
       const packFrame = document.getElementById("pack-frame");
@@ -429,6 +454,19 @@
         selectedSlotStart: "",
         existingBooking: null,
       };
+
+      const slotDayFormatter = new Intl.DateTimeFormat("en-AU", {
+        timeZone: "Australia/Sydney",
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      });
+
+      const slotTimeFormatter = new Intl.DateTimeFormat("en-AU", {
+        timeZone: "Australia/Sydney",
+        hour: "numeric",
+        minute: "2-digit",
+      });
 
       function setStatus(message, type = "info") {
         if (!message) {
@@ -491,6 +529,39 @@
         setViewMode("confirmed");
       }
 
+      function formatSlotDay(slotStart) {
+        return slotDayFormatter.format(new Date(slotStart));
+      }
+
+      function formatSlotTime(slotStart, slotEnd) {
+        const startText = slotTimeFormatter
+          .format(new Date(slotStart))
+          .replace(/\s/g, "");
+        const endText = slotTimeFormatter
+          .format(new Date(slotEnd))
+          .replace(/\s/g, "");
+        return `${startText} - ${endText}`;
+      }
+
+      function groupSlotsByDay(slots) {
+        const groups = [];
+        const map = new Map();
+
+        slots.forEach((slot) => {
+          const dayLabel = formatSlotDay(slot.start);
+
+          if (!map.has(dayLabel)) {
+            const group = { dayLabel, slots: [] };
+            map.set(dayLabel, group);
+            groups.push(group);
+          }
+
+          map.get(dayLabel).slots.push(slot);
+        });
+
+        return groups;
+      }
+
       function renderSlots() {
         slotGrid.innerHTML = "";
         state.selectedSlotStart = "";
@@ -511,28 +582,48 @@
           return;
         }
 
-        state.slots.forEach((slot) => {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = `slot-button${slot.available ? "" : " is-unavailable"}`;
-          button.textContent = slot.label;
-          button.disabled = !slot.available;
+        groupSlotsByDay(state.slots).forEach((group) => {
+          const row = document.createElement("div");
+          row.className = "slot-row";
 
-          button.addEventListener("click", () => {
-            state.selectedSlotStart = slot.start;
-            selectedCopy.textContent = `Selected: ${slot.label}`;
+          const dayCell = document.createElement("div");
+          dayCell.className = "slot-day";
+          dayCell.textContent = group.dayLabel;
 
-            Array.from(slotGrid.querySelectorAll(".slot-button")).forEach(
-              (candidate) => {
-                candidate.classList.remove("is-selected");
-              },
-            );
+          const timesCell = document.createElement("div");
+          timesCell.className = "slot-times";
 
-            button.classList.add("is-selected");
-            setBookingBusy(false);
+          const timesGrid = document.createElement("div");
+          timesGrid.className = "slot-grid";
+
+          group.slots.forEach((slot) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = `slot-button${slot.available ? "" : " is-unavailable"}`;
+            button.textContent = formatSlotTime(slot.start, slot.end);
+            button.disabled = !slot.available;
+
+            button.addEventListener("click", () => {
+              state.selectedSlotStart = slot.start;
+              selectedCopy.textContent = `Selected: ${group.dayLabel}, ${formatSlotTime(slot.start, slot.end)}`;
+
+              Array.from(slotGrid.querySelectorAll(".slot-button")).forEach(
+                (candidate) => {
+                  candidate.classList.remove("is-selected");
+                },
+              );
+
+              button.classList.add("is-selected");
+              setBookingBusy(false);
+            });
+
+            timesGrid.appendChild(button);
           });
 
-          slotGrid.appendChild(button);
+          timesCell.appendChild(timesGrid);
+          row.appendChild(dayCell);
+          row.appendChild(timesCell);
+          slotGrid.appendChild(row);
         });
       }
 
@@ -571,7 +662,6 @@
 
         setViewMode("booking");
         slotsPanel.classList.add("is-visible");
-        windowCopy.textContent = `Live availability for ${formatWindow(data.windowStart, data.windowEnd, data.timezone)}.`;
         renderSlots();
         setStatus(
           successMessage || "Choose a time, then review your pack underneath.",

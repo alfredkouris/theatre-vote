@@ -218,10 +218,11 @@ async function buildWatermarkedPack(name) {
   pdfDoc.getPages().forEach((page) => {
     const { width, height } = page.getSize();
     const fontSize = Math.max(52, Math.min(width, height) / 5.2);
+    const textWidth = font.widthOfTextAtSize(watermark, fontSize);
 
     page.drawText(watermark, {
-      x: width * 0.02,
-      y: height * 0.3,
+      x: (width - textWidth) / 2,
+      y: (height - fontSize) / 2,
       size: fontSize,
       font,
       rotate: degrees(35),
