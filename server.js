@@ -1,12 +1,328 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs/promises');
+const crypto = require('crypto');
+const { google } = require('googleapis');
+const { PDFDocument, StandardFonts, rgb, degrees } = require('pdf-lib');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public', { index: false }));
+
+const AUDITION_TIMEZONE = process.env.AUDITION_TIMEZONE || 'Australia/Sydney';
+const AUDITION_SLOT_MINUTES = Number.parseInt(process.env.AUDITION_SLOT_MINUTES || '10', 10);
+const AUDITION_WINDOW_START = process.env.AUDITION_WINDOW_START || '';
+const AUDITION_WINDOW_END = process.env.AUDITION_WINDOW_END || '';
+const AUDITION_PACK_PATH = process.env.AUDITION_PACK_PATH || path.join(__dirname, 'assets', 'audition-pack.pdf');
+const AUDITION_REGISTRATION_SECRET = process.env.AUDITION_REGISTRATION_SECRET || 'change-me-before-production';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const GOOGLE_REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN || '';
+const GOOGLE_CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
+const REGISTRATION_TOKEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+const slotLabelFormatter = new Intl.DateTimeFormat('en-AU', {
+  timeZone: AUDITION_TIMEZONE,
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  hour: 'numeric',
+  minute: '2-digit'
+});
+
+const slotEndFormatter = new Intl.DateTimeFormat('en-AU', {
+  timeZone: AUDITION_TIMEZONE,
+  hour: 'numeric',
+  minute: '2-digit'
+});
+
+let googleAuthClient = null;
+function validateAuditionWindow() {
+  if (!AUDITION_WINDOW_START || !AUDITION_WINDOW_END) {
+    throw new Error('Audition window is not configured. Set AUDITION_WINDOW_START and AUDITION_WINDOW_END.');
+  }
+
+  if (!Number.isFinite(AUDITION_SLOT_MINUTES) || AUDITION_SLOT_MINUTES <= 0) {
+    throw new Error('AUDITION_SLOT_MINUTES must be a positive integer.');
+  }
+
+  const start = new Date(AUDITION_WINDOW_START);
+  const end = new Date(AUDITION_WINDOW_END);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    throw new Error('AUDITION_WINDOW_START and AUDITION_WINDOW_END must be valid ISO timestamps.');
+  }
+
+  if (end <= start) {
+    throw new Error('AUDITION_WINDOW_END must be after AUDITION_WINDOW_START.');
+  }
+
+  return {
+    start,
+    end,
+    slotMinutes: AUDITION_SLOT_MINUTES,
+    slotMs: AUDITION_SLOT_MINUTES * 60 * 1000
+  };
+}
+
+function ensureGoogleCredentials() {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
+    throw new Error('Google integration is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN.');
+  }
+}
+
+function getGoogleAuthClient() {
+  ensureGoogleCredentials();
+
+  if (!googleAuthClient) {
+    googleAuthClient = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
+    googleAuthClient.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+  }
+
+  return googleAuthClient;
+}
+
+function getCalendarClient() {
+  return google.calendar({
+    version: 'v3',
+    auth: getGoogleAuthClient()
+  });
+}
+
+function sanitizeName(name = '') {
+  return name.replace(/\s+/g, ' ').trim();
+}
+
+function isValidEmail(email = '') {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
+}
+
+function createRegistrationToken(name, email) {
+  const payload = {
+    name,
+    email,
+    issuedAt: Date.now()
+  };
+
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto
+    .createHmac('sha256', AUDITION_REGISTRATION_SECRET)
+    .update(encodedPayload)
+    .digest('base64url');
+
+  return `${encodedPayload}.${signature}`;
+}
+
+function verifyRegistrationToken(token) {
+  if (!token || typeof token !== 'string' || !token.includes('.')) {
+    throw new Error('Registration token is missing or invalid.');
+  }
+
+  const [encodedPayload, providedSignature] = token.split('.');
+  const expectedSignature = crypto
+    .createHmac('sha256', AUDITION_REGISTRATION_SECRET)
+    .update(encodedPayload)
+    .digest('base64url');
+
+  const providedBuffer = Buffer.from(providedSignature);
+  const expectedBuffer = Buffer.from(expectedSignature);
+
+  if (
+    providedBuffer.length !== expectedBuffer.length ||
+    !crypto.timingSafeEqual(providedBuffer, expectedBuffer)
+  ) {
+    throw new Error('Registration token could not be verified.');
+  }
+
+  const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'));
+
+  if (!payload.issuedAt || Date.now() - payload.issuedAt > REGISTRATION_TOKEN_MAX_AGE_MS) {
+    throw new Error('Registration token has expired. Please register again.');
+  }
+
+  return {
+    name: sanitizeName(payload.name),
+    email: String(payload.email || '').trim().toLowerCase()
+  };
+}
+
+function buildAuditionSlots() {
+  const { start, end, slotMs } = validateAuditionWindow();
+  const slots = [];
+
+  for (let slotStartMs = start.getTime(); slotStartMs + slotMs <= end.getTime(); slotStartMs += slotMs) {
+    const slotStart = new Date(slotStartMs);
+    const slotEnd = new Date(slotStartMs + slotMs);
+
+    slots.push({
+      start: slotStart,
+      end: slotEnd,
+      eventId: buildAuditionEventId(slotStart),
+      label: `${slotLabelFormatter.format(slotStart)} - ${slotEndFormatter.format(slotEnd)}`
+    });
+  }
+
+  return slots;
+}
+
+function buildAuditionEventId(slotStart) {
+  return `audition${slotStart.getTime().toString(16)}`;
+}
+
+function findSlotByStart(slotStartIso) {
+  const requestedStart = new Date(slotStartIso);
+
+  if (Number.isNaN(requestedStart.getTime())) {
+    return null;
+  }
+
+  return buildAuditionSlots().find((slot) => slot.start.getTime() === requestedStart.getTime()) || null;
+}
+
+async function listBusyRanges(calendar, windowStart, windowEnd) {
+  const response = await calendar.freebusy.query({
+    requestBody: {
+      timeMin: windowStart.toISOString(),
+      timeMax: windowEnd.toISOString(),
+      items: [{ id: GOOGLE_CALENDAR_ID }]
+    }
+  });
+
+  return response.data.calendars?.[GOOGLE_CALENDAR_ID]?.busy || [];
+}
+
+function slotIsBusy(slot, busyRanges, now = new Date()) {
+  if (slot.start <= now) {
+    return true;
+  }
+
+  return busyRanges.some((range) => {
+    const busyStart = new Date(range.start);
+    const busyEnd = new Date(range.end);
+
+    return slot.start < busyEnd && slot.end > busyStart;
+  });
+}
+
+async function buildWatermarkedPack(name) {
+  const existingPdfBytes = await fs.readFile(AUDITION_PACK_PATH);
+  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+  const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const watermark = sanitizeName(name).toUpperCase();
+
+  pdfDoc.getPages().forEach((page) => {
+    const { width, height } = page.getSize();
+    const fontSize = Math.max(52, Math.min(width, height) / 5.2);
+
+    page.drawText(watermark, {
+      x: width * 0.02,
+      y: height * 0.3,
+      size: fontSize,
+      font,
+      rotate: degrees(35),
+      color: rgb(0.55, 0.55, 0.55),
+      opacity: 0.14
+    });
+  });
+
+  return Buffer.from(await pdfDoc.save());
+}
+
+async function createAuditionEvent(name, email, slot) {
+  const calendar = getCalendarClient();
+
+  return calendar.events.insert({
+    calendarId: GOOGLE_CALENDAR_ID,
+    conferenceDataVersion: 1,
+    sendUpdates: 'all',
+    requestBody: {
+      id: slot.eventId,
+      summary: `${name} - Audition`,
+      description: `Audition booking for ${name} (${email}).`,
+      extendedProperties: {
+        private: {
+          registrationEmail: email,
+          registrationName: name
+        }
+      },
+      start: {
+        dateTime: slot.start.toISOString(),
+        timeZone: AUDITION_TIMEZONE
+      },
+      end: {
+        dateTime: slot.end.toISOString(),
+        timeZone: AUDITION_TIMEZONE
+      },
+      attendees: [
+        {
+          displayName: name,
+          email
+        }
+      ],
+      conferenceData: {
+        createRequest: {
+          requestId: `${slot.eventId}-${Date.now()}`,
+          conferenceSolutionKey: {
+            type: 'hangoutsMeet'
+          }
+        }
+      }
+    }
+  });
+}
+
+async function listAuditionEvents(calendar, windowStart, windowEnd) {
+  const response = await calendar.events.list({
+    calendarId: GOOGLE_CALENDAR_ID,
+    timeMin: windowStart.toISOString(),
+    timeMax: windowEnd.toISOString(),
+    singleEvents: true,
+    orderBy: 'startTime',
+    maxResults: 250
+  });
+
+  return response.data.items || [];
+}
+
+function buildBookingDetailsFromEvent(event) {
+  const start = event.start?.dateTime || event.start?.date || '';
+  const end = event.end?.dateTime || event.end?.date || '';
+  const meetLink =
+    event.hangoutLink ||
+    event.conferenceData?.entryPoints?.find((entryPoint) => entryPoint.entryPointType === 'video')?.uri ||
+    '';
+
+  return {
+    eventId: event.id,
+    eventLink: event.htmlLink || '',
+    meetLink,
+    slot: {
+      start,
+      end,
+      label: start && end ? `${slotLabelFormatter.format(new Date(start))} - ${slotEndFormatter.format(new Date(end))}` : event.summary || 'Booked slot'
+    }
+  };
+}
+
+function findExistingBookingForAttendee(events, email) {
+  return events.find((event) => {
+    const registeredEmail = event.extendedProperties?.private?.registrationEmail;
+    if (registeredEmail && registeredEmail.toLowerCase() === email) {
+      return true;
+    }
+
+    if (event.attendees?.some((attendee) => String(attendee.email || '').trim().toLowerCase() === email)) {
+      return true;
+    }
+
+    return typeof event.description === 'string' && event.description.includes(`(${email})`);
+  }) || null;
+}
 
 // In-memory vote storage
 let votes = {
@@ -35,6 +351,146 @@ app.post('/api/vote', (req, res) => {
 app.post('/api/reset', (req, res) => {
   votes = { julia: 0, betty: 0 };
   res.json({ success: true, votes });
+});
+
+// ===== AUDITIONS =====
+
+app.post('/api/audition/register', async (req, res) => {
+  try {
+    const name = sanitizeName(req.body?.name);
+    const email = String(req.body?.email || '').trim().toLowerCase();
+
+    if (!name) {
+      return res.status(400).json({ success: false, error: 'Please enter your name.' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ success: false, error: 'Please enter a valid email address.' });
+    }
+
+    validateAuditionWindow();
+
+    res.json({
+      success: true,
+      registrationToken: createRegistrationToken(name, email),
+      message: 'Your registration is complete. You can now open the audition pack and choose a slot.'
+    });
+  } catch (error) {
+    console.error('Audition registration failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Could not complete registration right now.'
+    });
+  }
+});
+
+app.get('/api/audition/pack', async (req, res) => {
+  try {
+    const attendee = verifyRegistrationToken(req.query.registrationToken);
+    const pdfBuffer = await buildWatermarkedPack(attendee.name);
+    const safeFileName = `${attendee.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'audition'}-pack.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `${req.query.download ? 'attachment' : 'inline'}; filename="${safeFileName}"`
+    );
+    res.send(pdfBuffer);
+  } catch (error) {
+    const statusCode = /token/i.test(error.message) ? 401 : 500;
+    console.error('Could not build audition pack:', error);
+    res.status(statusCode).json({
+      success: false,
+      error: error.message || 'Could not open the audition pack right now.'
+    });
+  }
+});
+
+app.get('/api/audition/slots', async (req, res) => {
+  try {
+    const attendee = verifyRegistrationToken(req.query.registrationToken);
+    const calendar = getCalendarClient();
+    const windowConfig = validateAuditionWindow();
+    const slots = buildAuditionSlots();
+    const busyRanges = await listBusyRanges(calendar, windowConfig.start, windowConfig.end);
+    const events = await listAuditionEvents(calendar, windowConfig.start, windowConfig.end);
+    const existingBooking = findExistingBookingForAttendee(events, attendee.email);
+
+    res.json({
+      success: true,
+      attendee,
+      timezone: AUDITION_TIMEZONE,
+      windowStart: windowConfig.start.toISOString(),
+      windowEnd: windowConfig.end.toISOString(),
+      slotMinutes: windowConfig.slotMinutes,
+      existingBooking: existingBooking ? buildBookingDetailsFromEvent(existingBooking) : null,
+      slots: slots.map((slot) => ({
+        start: slot.start.toISOString(),
+        end: slot.end.toISOString(),
+        label: slot.label,
+        available: !slotIsBusy(slot, busyRanges)
+      }))
+    });
+  } catch (error) {
+    const statusCode = /token/i.test(error.message) ? 401 : 500;
+    console.error('Could not load audition slots:', error);
+    res.status(statusCode).json({
+      success: false,
+      error: error.message || 'Could not load audition slots right now.'
+    });
+  }
+});
+
+app.post('/api/audition/book', async (req, res) => {
+  try {
+    const attendee = verifyRegistrationToken(req.body?.registrationToken);
+    const slot = findSlotByStart(req.body?.slotStart);
+
+    if (!slot) {
+      return res.status(400).json({ success: false, error: 'That audition slot is invalid.' });
+    }
+
+    const calendar = getCalendarClient();
+    const windowConfig = validateAuditionWindow();
+    const events = await listAuditionEvents(calendar, windowConfig.start, windowConfig.end);
+    const existingBooking = findExistingBookingForAttendee(events, attendee.email);
+
+    if (existingBooking) {
+      return res.status(409).json({
+        success: false,
+        error: 'You already have an audition slot booked.',
+        existingBooking: buildBookingDetailsFromEvent(existingBooking)
+      });
+    }
+
+    const busyRanges = await listBusyRanges(calendar, windowConfig.start, windowConfig.end);
+
+    if (slotIsBusy(slot, busyRanges)) {
+      return res.status(409).json({
+        success: false,
+        error: 'That audition slot has already been taken. Please choose another one.'
+      });
+    }
+
+    const response = await createAuditionEvent(attendee.name, attendee.email, slot);
+    const bookingDetails = buildBookingDetailsFromEvent(response.data);
+
+    res.json({
+      success: true,
+      message: 'Your audition is booked. Check your email for the Google Calendar invitation.',
+      ...bookingDetails
+    });
+  } catch (error) {
+    const statusCode = error?.code === 409 ? 409 : /token/i.test(error.message) ? 401 : 500;
+    console.error('Could not book audition slot:', error);
+    res.status(statusCode).json({
+      success: false,
+      error:
+        statusCode === 409
+          ? 'That audition slot was just taken. Please pick another one.'
+          : error.message || 'Could not book that audition slot right now.'
+    });
+  }
 });
 
 // ===== CAKE RACE GAME =====
@@ -441,7 +897,7 @@ app.get('/api/race/status', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'race', 'display.html'));
+  res.status(404).type('text/plain').send('Not found');
 });
 
 app.get('/survey', (req, res) => {
@@ -454,6 +910,10 @@ app.get('/survey/vote', (req, res) => {
 
 app.get('/survey/display', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/audition', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'audition.html'));
 });
 
 app.get('/race', (req, res) => {
@@ -679,6 +1139,7 @@ app.listen(PORT, () => {
   console.log(`Survey Home: http://localhost:${PORT}/survey`);
   console.log(`Survey Vote: http://localhost:${PORT}/survey/vote`);
   console.log(`Survey Display Alias: http://localhost:${PORT}/survey/display`);
+  console.log(`Audition Booking: http://localhost:${PORT}/audition`);
   console.log(`Race Home: http://localhost:${PORT}/race`);
   console.log(`Race Play: http://localhost:${PORT}/race/play`);
   console.log(`Race Display Alias: http://localhost:${PORT}/race/display`);

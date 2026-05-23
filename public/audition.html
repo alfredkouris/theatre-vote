@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audition Booking</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #f8f6f1;
+        color: #111111;
+        font-family: Georgia, "Times New Roman", serif;
+      }
+
+      .page {
+        width: min(760px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 24px 0 64px;
+      }
+
+      .masthead {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+
+      .logo {
+        width: min(100%, 560px);
+        height: auto;
+        display: block;
+        margin: 0 auto 18px;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: clamp(24px, 5vw, 44px);
+        font-weight: 400;
+        line-height: 1.05;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .intro,
+      .copy,
+      .step-copy,
+      .window-copy,
+      .status,
+      .confirmation p,
+      .tiny {
+        font-size: 17px;
+        line-height: 1.65;
+      }
+
+      .intro {
+        margin: 0 auto 24px;
+        max-width: 700px;
+      }
+
+      .copy {
+        margin-bottom: 28px;
+      }
+
+      .copy p {
+        margin: 0 0 16px;
+      }
+
+      .section-title {
+        margin: 0 0 10px;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .step-panel,
+      .confirmation-step {
+        display: none;
+      }
+
+      .step-panel.is-visible,
+      .confirmation-step.is-visible {
+        display: block;
+      }
+
+      form {
+        display: grid;
+        gap: 22px;
+        margin: 0 0 22px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        font-size: 13px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px 0 12px;
+        border: 0;
+        border-bottom: 1px solid #111111;
+        background: transparent;
+        color: #111111;
+        font: inherit;
+        font-size: 18px;
+        border-radius: 0;
+      }
+
+      input:focus,
+      button:focus,
+      .download-link:focus {
+        outline: 2px solid rgba(0, 0, 0, 0.18);
+        outline-offset: 2px;
+      }
+
+      button,
+      .download-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #111111;
+        border-radius: 999px;
+        padding: 10px 16px;
+        background: #ffffff;
+        color: #111111;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition:
+          background 160ms ease,
+          color 160ms ease,
+          opacity 160ms ease;
+      }
+
+      button:hover,
+      .download-link:hover {
+        background: #111111;
+        color: #ffffff;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .small-button {
+        padding: 7px 12px;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .status {
+        display: none;
+        margin: 16px 0 0;
+      }
+
+      .status.is-visible {
+        display: block;
+      }
+
+      .step-stack {
+        display: grid;
+        gap: 30px;
+      }
+
+      .slots-panel {
+        display: none;
+        padding-top: 18px;
+        border-top: 1px solid #111111;
+      }
+
+      .slots-panel.is-visible {
+        display: block;
+      }
+
+      .slot-picker {
+        max-height: 220px;
+        overflow-y: auto;
+        padding: 12px 0 0;
+        border-top: 1px solid rgba(17, 17, 17, 0.14);
+        border-bottom: 1px solid rgba(17, 17, 17, 0.14);
+        scrollbar-width: thin;
+      }
+
+      .slot-picker-label {
+        margin: 0 0 10px;
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .slot-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      .slot-button {
+        text-align: left;
+        padding: 10px 14px;
+        min-height: 0;
+        font-size: 15px;
+        line-height: 1.2;
+      }
+
+      .slot-button.is-selected {
+        background: #111111;
+        color: #ffffff;
+      }
+
+      .slot-button.is-unavailable {
+        opacity: 0.34;
+        cursor: default;
+        text-decoration: line-through;
+      }
+
+      .selection-row {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        margin-top: 18px;
+        flex-wrap: wrap;
+      }
+
+      .pack-section {
+        padding-top: 18px;
+        border-top: 1px solid #111111;
+      }
+
+      .pack-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+      }
+
+      .pack-preview {
+        background: #ffffff;
+        border: 1px solid rgba(17, 17, 17, 0.14);
+        height: 420px;
+        overflow: hidden;
+      }
+
+      .pack-frame {
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+
+      .confirmation {
+        display: none;
+        margin-top: 18px;
+      }
+
+      .confirmation.is-visible {
+        display: block;
+      }
+
+      .confirmation h2 {
+        margin: 0 0 12px;
+        font-size: 24px;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .confirmation p {
+        margin: 0 0 10px;
+      }
+
+      @media (max-width: 760px) {
+        .page {
+          width: min(100% - 24px, 760px);
+          padding-top: 20px;
+        }
+
+        .intro,
+        .copy,
+        .step-copy,
+        .window-copy,
+        .status,
+        .confirmation p,
+        .tiny {
+          font-size: 16px;
+        }
+
+        .pack-preview {
+          height: 360px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="masthead">
+        <img
+          src="/logo-black.png"
+          alt="Alfred Kouris and Harry Stacey Bake a Cake"
+          class="logo"
+        />
+        <h1>Voiceover Audition Booking</h1>
+        <p class="intro">Join part of theatre history.</p>
+      </header>
+
+      <section class="copy">
+        <p>
+          The role or roles are available for performers of any age, gender and
+          cultural background. We are looking for voiceover artists with a
+          natural tone. These are everyday people, not to be overplayed.
+        </p>
+      </section>
+
+      <section id="register-step">
+        <h2 class="section-title">Step 1: Register</h2>
+
+        <form id="register-form">
+          <label>
+            Full name
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autocomplete="name"
+              required
+            />
+          </label>
+
+          <label>
+            Email address
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+            />
+          </label>
+
+          <div>
+            <button id="register-button" type="submit">Continue</button>
+          </div>
+        </form>
+
+        <div id="status" class="status info" aria-live="polite"></div>
+      </section>
+
+      <section id="booking-step" class="step-panel">
+        <div class="step-stack">
+          <div id="slots-panel" class="slots-panel">
+            <h2 class="section-title">Step 2: Pick A Time</h2>
+            <p id="window-copy" class="window-copy">
+              Available audition times will appear here.
+            </p>
+
+            <div class="slot-picker">
+              <p class="slot-picker-label">Tap a time</p>
+              <div id="slot-grid" class="slot-grid"></div>
+            </div>
+
+            <div class="selection-row">
+              <button id="book-button" type="button" disabled>
+                Confirm Audition Slot
+              </button>
+              <span id="selected-copy" class="tiny">No slot selected yet.</span>
+            </div>
+          </div>
+
+          <div class="pack-section">
+            <h2 class="section-title">Step 3: Audition Pack</h2>
+            <p class="step-copy">Your watermarked audition pack is below.</p>
+            <div class="pack-toolbar">
+              <a
+                id="pack-download-button"
+                class="download-link small-button"
+                href="#"
+                download
+                >Download PDF</a
+              >
+            </div>
+            <div class="pack-preview">
+              <iframe
+                id="pack-frame"
+                class="pack-frame"
+                title="Audition pack preview"
+              ></iframe>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="confirmation-step" class="confirmation-step">
+        <div id="confirmation" class="confirmation"></div>
+      </section>
+    </main>
+
+    <script>
+      const registerForm = document.getElementById("register-form");
+      const registerButton = document.getElementById("register-button");
+      const registerStep = document.getElementById("register-step");
+      const bookingStep = document.getElementById("booking-step");
+      const confirmationStep = document.getElementById("confirmation-step");
+      const slotsPanel = document.getElementById("slots-panel");
+      const slotGrid = document.getElementById("slot-grid");
+      const statusBox = document.getElementById("status");
+      const bookButton = document.getElementById("book-button");
+      const selectedCopy = document.getElementById("selected-copy");
+      const confirmationBox = document.getElementById("confirmation");
+      const windowCopy = document.getElementById("window-copy");
+      const nameInput = document.getElementById("name");
+      const emailInput = document.getElementById("email");
+      const packFrame = document.getElementById("pack-frame");
+      const packDownloadButton = document.getElementById(
+        "pack-download-button",
+      );
+
+      const STORAGE_KEY = "audition-registration-token";
+
+      const state = {
+        registrationToken: "",
+        slots: [],
+        selectedSlotStart: "",
+        existingBooking: null,
+      };
+
+      function setStatus(message, type = "info") {
+        if (!message) {
+          statusBox.textContent = "";
+          statusBox.className = "status";
+          return;
+        }
+
+        statusBox.textContent = message;
+        statusBox.className = `status is-visible ${type}`;
+      }
+
+      function setRegisterBusy(isBusy) {
+        registerButton.disabled = isBusy;
+        registerButton.textContent = isBusy ? "Continuing..." : "Continue";
+      }
+
+      function setBookingBusy(isBusy) {
+        bookButton.disabled =
+          isBusy || !state.selectedSlotStart || Boolean(state.existingBooking);
+        bookButton.textContent = isBusy
+          ? "Confirming..."
+          : "Confirm Audition Slot";
+      }
+
+      function setViewMode(mode) {
+        registerStep.style.display = mode === "register" ? "block" : "none";
+        bookingStep.classList.toggle("is-visible", mode === "booking");
+        confirmationStep.classList.toggle("is-visible", mode === "confirmed");
+      }
+
+      function formatWindow(windowStart, windowEnd, timezone) {
+        const start = new Date(windowStart);
+        const end = new Date(windowEnd);
+        const header = new Intl.DateTimeFormat("en-AU", {
+          timeZone: timezone,
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        }).format(start);
+        const times = new Intl.DateTimeFormat("en-AU", {
+          timeZone: timezone,
+          hour: "numeric",
+          minute: "2-digit",
+        });
+
+        return `${header}, ${times.format(start)} to ${times.format(end)}`;
+      }
+
+      function showConfirmationOnly(booking, message) {
+        state.existingBooking = booking;
+        state.selectedSlotStart = "";
+        confirmationBox.className = "confirmation is-visible";
+        confirmationBox.innerHTML = `
+        <h2>Audition Confirmed</h2>
+        <p><strong>${booking.slot.label}</strong></p>
+        <p>${message}</p>
+        <p>You will receive a Google Calendar event to your email.</p>
+      `;
+        setViewMode("confirmed");
+      }
+
+      function renderSlots() {
+        slotGrid.innerHTML = "";
+        state.selectedSlotStart = "";
+        selectedCopy.textContent = "No slot selected yet.";
+        setBookingBusy(false);
+
+        const availableSlots = state.slots.filter((slot) => slot.available);
+
+        if (!state.slots.length) {
+          slotGrid.innerHTML =
+            '<p class="tiny">No slots are configured yet.</p>';
+          return;
+        }
+
+        if (!availableSlots.length) {
+          slotGrid.innerHTML =
+            '<p class="tiny">All audition slots have been booked.</p>';
+          return;
+        }
+
+        state.slots.forEach((slot) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `slot-button${slot.available ? "" : " is-unavailable"}`;
+          button.textContent = slot.label;
+          button.disabled = !slot.available;
+
+          button.addEventListener("click", () => {
+            state.selectedSlotStart = slot.start;
+            selectedCopy.textContent = `Selected: ${slot.label}`;
+
+            Array.from(slotGrid.querySelectorAll(".slot-button")).forEach(
+              (candidate) => {
+                candidate.classList.remove("is-selected");
+              },
+            );
+
+            button.classList.add("is-selected");
+            setBookingBusy(false);
+          });
+
+          slotGrid.appendChild(button);
+        });
+      }
+
+      async function loadSlots(token, successMessage = "") {
+        setStatus(
+          successMessage || "Loading available audition times...",
+          "info",
+        );
+
+        const response = await fetch(
+          `/api/audition/slots?registrationToken=${encodeURIComponent(token)}`,
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Could not load audition slots.");
+        }
+
+        state.registrationToken = token;
+        state.slots = data.slots;
+        state.existingBooking = data.existingBooking || null;
+        sessionStorage.setItem(STORAGE_KEY, token);
+
+        const packUrl = `/api/audition/pack?registrationToken=${encodeURIComponent(token)}#toolbar=0&navpanes=0&scrollbar=0`;
+        packFrame.src = packUrl;
+        packDownloadButton.href = `/api/audition/pack?registrationToken=${encodeURIComponent(token)}&download=1`;
+
+        if (state.existingBooking) {
+          showConfirmationOnly(
+            state.existingBooking,
+            "You already have an audition slot booked.",
+          );
+          setStatus("", "info");
+          return;
+        }
+
+        setViewMode("booking");
+        slotsPanel.classList.add("is-visible");
+        windowCopy.textContent = `Live availability for ${formatWindow(data.windowStart, data.windowEnd, data.timezone)}.`;
+        renderSlots();
+        setStatus(
+          successMessage || "Choose a time, then review your pack underneath.",
+          "success",
+        );
+        bookingStep.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      registerForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        setRegisterBusy(true);
+
+        try {
+          const response = await fetch("/api/audition/register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: nameInput.value,
+              email: emailInput.value,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Could not complete registration.");
+          }
+
+          await loadSlots(data.registrationToken, data.message);
+        } catch (error) {
+          setStatus(
+            error.message || "Could not complete registration.",
+            "error",
+          );
+        } finally {
+          setRegisterBusy(false);
+        }
+      });
+
+      bookButton.addEventListener("click", async () => {
+        if (!state.registrationToken || !state.selectedSlotStart) {
+          return;
+        }
+
+        setBookingBusy(true);
+        setStatus("Confirming your audition slot...", "info");
+
+        try {
+          const response = await fetch("/api/audition/book", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              registrationToken: state.registrationToken,
+              slotStart: state.selectedSlotStart,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            const bookingError = new Error(
+              data.error || "Could not book that slot.",
+            );
+            if (data.existingBooking) {
+              bookingError.existingBooking = data.existingBooking;
+            }
+            throw bookingError;
+          }
+
+          setStatus("", "info");
+          showConfirmationOnly(data, "Your audition slot has been booked.");
+        } catch (error) {
+          if (error.existingBooking) {
+            setStatus("", "info");
+            showConfirmationOnly(
+              error.existingBooking,
+              "You already have an audition slot booked.",
+            );
+            return;
+          }
+
+          setStatus(error.message || "Could not book that slot.", "error");
+          setBookingBusy(false);
+        }
+      });
+
+      (async function restoreSession() {
+        const existingToken = sessionStorage.getItem(STORAGE_KEY);
+
+        if (!existingToken) {
+          setViewMode("register");
+          return;
+        }
+
+        try {
+          await loadSlots(
+            existingToken,
+            "You can continue where you left off.",
+          );
+        } catch (error) {
+          sessionStorage.removeItem(STORAGE_KEY);
+          setViewMode("register");
+          setStatus("Please register again to continue.", "info");
+        }
+      })();
+    </script>
+  </body>
+</html>

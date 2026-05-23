@@ -1,80 +1,94 @@
-# Theatre Vote System
+# Theatre Vote
 
-A minimal, fast live voting system for theatre shows with a stainless steel aesthetic.
+Small Express app for three lightweight flows:
 
-## Quick Start
+- `/survey` for the chef survey display
+- `/survey/vote` for the survey voting page
+- `/race/*` for the cupcake race screens
+- `/audition` for the audition registration and booking flow
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+`/` intentionally returns `404 Not found` so the survey is not exposed at the root URL.
 
-2. Start the server:
-   ```bash
-   npm start
-   ```
+## Run locally
 
-3. Open in your browser:
-   - **Display (for projection)**: http://localhost:3000/display.html
-   - **Voting page**: http://localhost:3000/vote.html
+```bash
+npm install
+npm start
+```
 
-## Usage
+## Audition flow
 
-### For the theatre:
-1. Open `display.html` on the computer connected to your projector
-2. Audience members scan the QR code with their phones
-3. They vote Agree/Disagree on Harry's behaviour
-4. Results update live on the projected display
+The `/audition` page works in two steps:
 
-### URLs:
-- Display page: Shows QR code (left) + live graph (right)
-- Vote page: The page audience members access to vote
+1. A person submits their name and email.
+2. The server generates a watermarked audition pack PDF with their name for immediate viewing or download.
+3. The page loads live 10-minute availability from Google Calendar.
+4. When they book a slot, the app creates a Google Calendar event called `[Name] - Audition` and asks Google to email the calendar invitation to the attendee.
 
-## Features
+There is no database. Slot locking is handled by:
 
-- **Real-time updates**: Votes appear instantly on the display
-- **Minimal design**: Clean stainless steel aesthetic
-- **Mobile-friendly**: Voting page works on all devices
-- **No database needed**: Uses in-memory storage (resets on restart)
-- **Fast & lightweight**: No unnecessary dependencies
+- Checking live busy times from Google Calendar
+- Creating each slot with a deterministic Google Calendar event ID so the same 10-minute slot cannot be booked twice
 
-## API Endpoints
+## Railway environment variables
 
-- `GET /api/votes` - Get current vote counts
-- `POST /api/vote` - Submit a vote (body: `{"vote": "agree"}` or `{"vote": "disagree"}`)
-- `POST /api/reset` - Reset all votes to zero
+Set these in Railway before using `/audition`:
 
-## Customization
+```bash
+AUDITION_TIMEZONE=Australia/Sydney
+AUDITION_SLOT_MINUTES=10
+AUDITION_WINDOW_START=2026-05-24T12:00:00+10:00
+AUDITION_WINDOW_END=2026-05-24T16:00:00+10:00
+AUDITION_PACK_PATH=/app/assets/audition-pack.pdf
+AUDITION_REGISTRATION_SECRET=replace-with-a-long-random-string
 
-### Change the question:
-Edit the `<h1>` tag in both `display.html` and `vote.html`
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REFRESH_TOKEN=...
+GOOGLE_CALENDAR_ID=primary
+```
 
-### Change colors:
-Modify `styles.css` - look for background colors and borders
+Place the PDF at `assets/audition-pack.pdf` unless you point `AUDITION_PACK_PATH` somewhere else.
 
-### Change update frequency:
-In `display.html`, find `setInterval(updateVotes, 1000)` and change `1000` (milliseconds)
+## Google setup
 
-## Deploy to Railway
+You need one Google OAuth client and one refresh token from the Google account that owns the calendar.
 
-1. Push this repository to GitHub
+Required Google scopes:
 
-2. Go to [railway.app](https://railway.app) and sign in with GitHub
+- `https://www.googleapis.com/auth/calendar`
 
-3. Click "New Project" → "Deploy from GitHub repo"
+The app uses the same Google account to:
 
-4. Select your `theatre-vote` repository
+- read busy times from Calendar
+- create the audition event
+- generate the Google Meet link
 
-5. Railway will automatically detect the Node.js app and deploy it
+### Generate the refresh token
 
-6. Once deployed, click "Generate Domain" to get your public URL
+Add these first:
 
-7. Your voting system will be live at `https://your-app.railway.app`
+```bash
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+```
 
-That's it! The QR code will automatically update to use your Railway URL.
+Then add this exact OAuth redirect URI to your Google Cloud OAuth client:
 
-## Notes
+```bash
+http://127.0.0.1:3005/oauth2callback
+```
 
-- Votes are stored in memory, so they reset when the app restarts
-- For persistent votes, consider adding a database (Railway offers PostgreSQL)
-- The free tier is perfect for theatre shows with moderate traffic
+Run:
+
+```bash
+npm run oauth:google
+```
+
+The script will print a Google auth URL. Open it, sign into the correct Google account, approve access, and copy the printed `GOOGLE_REFRESH_TOKEN` into Railway.
+
+## Calendar invitation delivery
+
+Attendees receive the calendar invite because the app creates the event with them in the `attendees` list and sends the insert request with `sendUpdates: "all"`.
+
+That means Google Calendar handles the invitation email automatically. No separate database or calendar email logic is needed for invites.
