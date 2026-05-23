@@ -286,6 +286,12 @@
         margin: 0 0 10px;
       }
 
+      .confirmation-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 18px;
+      }
+
       @media (max-width: 760px) {
         .page {
           width: min(100% - 24px, 760px);
@@ -489,12 +495,18 @@
       function showConfirmationOnly(booking, message) {
         state.existingBooking = booking;
         state.selectedSlotStart = "";
+        const downloadHref = state.registrationToken
+          ? `/api/audition/pack?registrationToken=${encodeURIComponent(state.registrationToken)}&download=1`
+          : "#";
         confirmationBox.className = "confirmation is-visible";
         confirmationBox.innerHTML = `
         <h2>Audition Confirmed</h2>
         <p><strong>${booking.slot.label}</strong></p>
         <p>${message}</p>
         <p>You will receive a Google Calendar event to your email.</p>
+        <div class="confirmation-actions">
+          <a class="download-link" href="${downloadHref}" download>Download Audition Pack</a>
+        </div>
       `;
         setViewMode("confirmed");
       }

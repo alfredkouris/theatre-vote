@@ -15,7 +15,8 @@ app.use(express.json());
 app.use(express.static('public', { index: false }));
 
 const AUDITION_TIMEZONE = process.env.AUDITION_TIMEZONE || 'Australia/Sydney';
-const AUDITION_SLOT_MINUTES = Number.parseInt(process.env.AUDITION_SLOT_MINUTES || '10', 10);
+const AUDITION_SLOT_DURATION_MINUTES = Number.parseInt(process.env.AUDITION_SLOT_DURATION_MINUTES || '5', 10);
+const AUDITION_SLOT_GAP_MINUTES = Number.parseInt(process.env.AUDITION_SLOT_GAP_MINUTES || '5', 10);
 const AUDITION_WINDOW_START = process.env.AUDITION_WINDOW_START || '';
 const AUDITION_WINDOW_END = process.env.AUDITION_WINDOW_END || '';
 const AUDITION_PACK_PATH = process.env.AUDITION_PACK_PATH || path.join(__dirname, 'assets', 'audition-pack.pdf');
@@ -57,8 +58,12 @@ function validateAuditionWindow() {
     throw new Error('Audition window is not configured. Set AUDITION_WINDOW_START and AUDITION_WINDOW_END.');
   }
 
-  if (!Number.isFinite(AUDITION_SLOT_MINUTES) || AUDITION_SLOT_MINUTES <= 0) {
-    throw new Error('AUDITION_SLOT_MINUTES must be a positive integer.');
+  if (!Number.isFinite(AUDITION_SLOT_DURATION_MINUTES) || AUDITION_SLOT_DURATION_MINUTES <= 0) {
+    throw new Error('AUDITION_SLOT_DURATION_MINUTES must be a positive integer.');
+  }
+
+  if (!Number.isFinite(AUDITION_SLOT_GAP_MINUTES) || AUDITION_SLOT_GAP_MINUTES < 0) {
+    throw new Error('AUDITION_SLOT_GAP_MINUTES must be zero or a positive integer.');
   }
 
   const start = new Date(AUDITION_WINDOW_START);
@@ -75,8 +80,10 @@ function validateAuditionWindow() {
   return {
     start,
     end,
-    slotMinutes: AUDITION_SLOT_MINUTES,
-    slotMs: AUDITION_SLOT_MINUTES * 60 * 1000
+    slotDurationMinutes: AUDITION_SLOT_DURATION_MINUTES,
+    slotGapMinutes: AUDITION_SLOT_GAP_MINUTES,
+    slotDurationMs: AUDITION_SLOT_DURATION_MINUTES * 60 * 1000,
+    slotStepMs: (AUDITION_SLOT_DURATION_MINUTES + AUDITION_SLOT_GAP_MINUTES) * 60 * 1000
   };
 }
 
@@ -169,12 +176,12 @@ function verifyRegistrationToken(token) {
 }
 
 function buildAuditionSlots() {
-  const { start, end, slotMs } = validateAuditionWindow();
+  const { start, end, slotDurationMs, slotStepMs } = validateAuditionWindow();
   const slots = [];
 
-  for (let slotStartMs = start.getTime(); slotStartMs + slotMs <= end.getTime(); slotStartMs += slotMs) {
+  for (let slotStartMs = start.getTime(); slotStartMs + slotDurationMs <= end.getTime(); slotStartMs += slotStepMs) {
     const slotStart = new Date(slotStartMs);
-    const slotEnd = new Date(slotStartMs + slotMs);
+    const slotEnd = new Date(slotStartMs + slotDurationMs);
 
     slots.push({
       start: slotStart,
@@ -501,7 +508,8 @@ app.get('/api/audition/slots', async (req, res) => {
       timezone: AUDITION_TIMEZONE,
       windowStart: windowConfig.start.toISOString(),
       windowEnd: windowConfig.end.toISOString(),
-      slotMinutes: windowConfig.slotMinutes,
+      slotDurationMinutes: windowConfig.slotDurationMinutes,
+      slotGapMinutes: windowConfig.slotGapMinutes,
       existingBooking: existingBooking ? buildBookingDetailsFromEvent(existingBooking) : null,
       slots: slots.map((slot) => ({
         start: slot.start.toISOString(),
