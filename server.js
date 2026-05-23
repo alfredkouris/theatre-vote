@@ -271,6 +271,12 @@ async function createAuditionEvent(name, email, slot) {
     requestBody: {
       summary: `${name} - Audition`,
       description: `Audition booking for ${name} (${email}).`,
+      attendees: [
+        {
+          email,
+          displayName: name
+        }
+      ],
       extendedProperties: {
         private: {
           registrationEmail: email,
@@ -287,12 +293,6 @@ async function createAuditionEvent(name, email, slot) {
         dateTime: slot.end.toISOString(),
         timeZone: AUDITION_TIMEZONE
       },
-      attendees: [
-        {
-          displayName: name,
-          email
-        }
-      ],
       conferenceData: {
         createRequest: {
           requestId: `${slot.eventId}-${Date.now()}`,
@@ -318,6 +318,15 @@ async function listAuditionEvents(calendar, windowStart, windowEnd) {
   return response.data.items || [];
 }
 
+async function getAuditionEvent(calendar, eventId) {
+  const response = await calendar.events.get({
+    calendarId: GOOGLE_CALENDAR_ID,
+    eventId
+  });
+
+  return response.data;
+}
+
 function buildBookingDetailsFromEvent(event) {
   const start = event.start?.dateTime || event.start?.date || '';
   const end = event.end?.dateTime || event.end?.date || '';
@@ -336,6 +345,56 @@ function buildBookingDetailsFromEvent(event) {
       label: start && end ? `${slotLabelFormatter.format(new Date(start))} - ${slotEndFormatter.format(new Date(end))}` : event.summary || 'Booked slot'
     }
   };
+}
+
+function escapeIcsText(value = '') {
+  return String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/\r?\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
+}
+
+function formatIcsDate(dateLike) {
+  const date = new Date(dateLike);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error('Invalid event date for calendar file.');
+  }
+
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+}
+
+function buildAuditionIcs(event, attendeeName) {
+  const booking = buildBookingDetailsFromEvent(event);
+  const start = formatIcsDate(booking.slot.start);
+  const end = formatIcsDate(booking.slot.end);
+  const stamp = formatIcsDate(new Date());
+  const attendeeEmail = event.extendedProperties?.private?.registrationEmail || '';
+  const description = [
+    `Audition booking for ${attendeeName}.`,
+    booking.meetLink ? `Google Meet: ${booking.meetLink}` : '',
+    `Timezone: ${AUDITION_TIMEZONE}`
+  ].filter(Boolean).join('\n');
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//AKHSBAC//Auditions//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${escapeIcsText(event.id)}@akhsbac.site`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${escapeIcsText(event.summary || `${attendeeName} - Audition`)}`,
+    `DESCRIPTION:${escapeIcsText(description)}`,
+    `LOCATION:${escapeIcsText(booking.meetLink || 'Online')}`,
+    attendeeEmail ? `ATTENDEE;CN=${escapeIcsText(attendeeName)}:mailto:${escapeIcsText(attendeeEmail)}` : '',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].filter(Boolean).join('\r\n');
 }
 
 function buildConfirmationEmail(name, bookingDetails) {
@@ -575,7 +634,7 @@ app.post('/api/audition/book', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Your audition is booked. Check your email for the Google Calendar invitation.',
+      message: 'Your audition is booked. Check your email for your calendar invite and Google Meet link.',
       confirmationEmailSent,
       confirmationEmailError,
       ...bookingDetails
