@@ -269,13 +269,14 @@ async function createAuditionEvent(name, email, slot) {
     conferenceDataVersion: 1,
     sendUpdates: 'all',
     requestBody: {
-      id: slot.eventId,
       summary: `${name} - Audition`,
       description: `Audition booking for ${name} (${email}).`,
       extendedProperties: {
         private: {
           registrationEmail: email,
-          registrationName: name
+          registrationName: name,
+          slotStart: slot.start.toISOString(),
+          slotEnd: slot.end.toISOString()
         }
       },
       start: {
