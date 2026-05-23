@@ -46,8 +46,6 @@
 
       .intro,
       .copy,
-      .step-copy,
-      .window-copy,
       .status,
       .confirmation p,
       .tiny {
@@ -159,7 +157,7 @@
 
       .status {
         display: none;
-        margin: 16px 0 0;
+        margin: 0 0 18px;
       }
 
       .status.is-visible {
@@ -263,21 +261,8 @@
 
       .pack-toolbar {
         display: flex;
-        justify-content: flex-end;
-        margin-bottom: 12px;
-      }
-
-      .pack-preview {
-        background: #ffffff;
-        border: 1px solid rgba(17, 17, 17, 0.14);
-        height: 420px;
-        overflow: hidden;
-      }
-
-      .pack-frame {
-        width: 100%;
-        height: 100%;
-        border: 0;
+        justify-content: center;
+        margin-top: 4px;
       }
 
       .confirmation {
@@ -309,16 +294,10 @@
 
         .intro,
         .copy,
-        .step-copy,
-        .window-copy,
         .status,
         .confirmation p,
         .tiny {
           font-size: 16px;
-        }
-
-        .pack-preview {
-          height: 360px;
         }
 
         .slot-row {
@@ -350,6 +329,8 @@
         <p class="intro">Join part of theatre history.</p>
       </header>
 
+      <div id="status" class="status info" aria-live="polite"></div>
+
       <section id="register-step">
         <h2 class="section-title">Step 1: Register</h2>
 
@@ -380,8 +361,6 @@
             <button id="register-button" type="submit">Continue</button>
           </div>
         </form>
-
-        <div id="status" class="status info" aria-live="polite"></div>
       </section>
 
       <section id="booking-step" class="step-panel">
@@ -401,22 +380,14 @@
           </div>
 
           <div class="pack-section">
-            <h2 class="section-title">Step 3: Audition Pack</h2>
             <div class="pack-toolbar">
               <a
                 id="pack-download-button"
-                class="download-link small-button"
+                class="download-link"
                 href="#"
                 download
-                >Download PDF</a
+                >Download Audition Pack</a
               >
-            </div>
-            <div class="pack-preview">
-              <iframe
-                id="pack-frame"
-                class="pack-frame"
-                title="Audition pack preview"
-              ></iframe>
             </div>
           </div>
         </div>
@@ -441,7 +412,6 @@
       const confirmationBox = document.getElementById("confirmation");
       const nameInput = document.getElementById("name");
       const emailInput = document.getElementById("email");
-      const packFrame = document.getElementById("pack-frame");
       const packDownloadButton = document.getElementById(
         "pack-download-button",
       );
@@ -647,8 +617,6 @@
         state.existingBooking = data.existingBooking || null;
         sessionStorage.setItem(STORAGE_KEY, token);
 
-        const packUrl = `/api/audition/pack?registrationToken=${encodeURIComponent(token)}#toolbar=0&navpanes=0&scrollbar=0`;
-        packFrame.src = packUrl;
         packDownloadButton.href = `/api/audition/pack?registrationToken=${encodeURIComponent(token)}&download=1`;
 
         if (state.existingBooking) {
@@ -664,7 +632,7 @@
         slotsPanel.classList.add("is-visible");
         renderSlots();
         setStatus(
-          successMessage || "Choose a time, then review your pack underneath.",
+          successMessage || "Choose a time, then download your audition pack underneath.",
           "success",
         );
         bookingStep.scrollIntoView({ behavior: "smooth", block: "start" });
