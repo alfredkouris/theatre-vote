@@ -46,23 +46,26 @@ GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 GOOGLE_REFRESH_TOKEN=...
 GOOGLE_CALENDAR_ID=primary
+GOOGLE_GMAIL_USER=akhsbac@gmail.com
 ```
 
 Place the PDF at `assets/audition-pack.pdf` unless you point `AUDITION_PACK_PATH` somewhere else.
 
 ## Google setup
 
-You need one Google OAuth client and one refresh token from the Google account that owns the calendar.
+You need one Google OAuth client and one refresh token from the Google account that owns the calendar and sends the plain-text confirmation email.
 
 Required Google scopes:
 
 - `https://www.googleapis.com/auth/calendar`
+- `https://www.googleapis.com/auth/gmail.send`
 
 The app uses the same Google account to:
 
 - read busy times from Calendar
 - create the audition event
 - generate the Google Meet link
+- send the plain-text booking confirmation email
 
 ### Generate the refresh token
 
@@ -85,7 +88,7 @@ Run:
 npm run oauth:google
 ```
 
-The script will print a Google auth URL. Open it, sign into the correct Google account, approve access, and copy the printed `GOOGLE_REFRESH_TOKEN` into Railway.
+The script will print a Google auth URL. Open it, sign into the correct Google account, approve access, and copy the printed `GOOGLE_REFRESH_TOKEN` into Railway. Regenerate the token any time you add scopes such as `gmail.send`.
 
 ## Calendar invitation delivery
 

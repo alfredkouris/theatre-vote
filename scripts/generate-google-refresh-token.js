@@ -12,7 +12,8 @@ const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 
 const SCOPES = [
-  'https://www.googleapis.com/auth/calendar'
+  'https://www.googleapis.com/auth/calendar',
+  'https://www.googleapis.com/auth/gmail.send'
 ];
 
 if (!CLIENT_ID || !CLIENT_SECRET) {

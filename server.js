@@ -24,6 +24,7 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const GOOGLE_REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN || '';
 const GOOGLE_CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
+const GOOGLE_GMAIL_USER = process.env.GOOGLE_GMAIL_USER || '';
 const REGISTRATION_TOKEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const slotLabelFormatter = new Intl.DateTimeFormat('en-AU', {
@@ -37,6 +38,15 @@ const slotLabelFormatter = new Intl.DateTimeFormat('en-AU', {
 
 const slotEndFormatter = new Intl.DateTimeFormat('en-AU', {
   timeZone: AUDITION_TIMEZONE,
+  hour: 'numeric',
+  minute: '2-digit'
+});
+
+const slotEmailFormatter = new Intl.DateTimeFormat('en-AU', {
+  timeZone: AUDITION_TIMEZONE,
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
   hour: 'numeric',
   minute: '2-digit'
 });
@@ -90,6 +100,13 @@ function getGoogleAuthClient() {
 function getCalendarClient() {
   return google.calendar({
     version: 'v3',
+    auth: getGoogleAuthClient()
+  });
+}
+
+function getGmailClient() {
+  return google.gmail({
+    version: 'v1',
     auth: getGoogleAuthClient()
   });
 }
@@ -212,22 +229,25 @@ function slotIsBusy(slot, busyRanges, now = new Date()) {
 async function buildWatermarkedPack(name) {
   const existingPdfBytes = await fs.readFile(AUDITION_PACK_PATH);
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
-  const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const font = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
   const watermark = sanitizeName(name).toUpperCase();
 
   pdfDoc.getPages().forEach((page) => {
     const { width, height } = page.getSize();
-    const fontSize = Math.max(52, Math.min(width, height) / 5.2);
+    const fontSize = Math.max(42, Math.min(width, height) / 7);
     const textWidth = font.widthOfTextAtSize(watermark, fontSize);
+    const positions = [0.74, 0.5, 0.26];
 
-    page.drawText(watermark, {
-      x: (width - textWidth) / 2,
-      y: (height - fontSize) / 2,
-      size: fontSize,
-      font,
-      rotate: degrees(35),
-      color: rgb(0.55, 0.55, 0.55),
-      opacity: 0.14
+    positions.forEach((ratio) => {
+      page.drawText(watermark, {
+        x: (width - textWidth) / 2,
+        y: height * ratio - fontSize / 2,
+        size: fontSize,
+        font,
+        rotate: degrees(35),
+        color: rgb(0.55, 0.55, 0.55),
+        opacity: 0.12
+      });
     });
   });
 
@@ -308,6 +328,64 @@ function buildBookingDetailsFromEvent(event) {
       label: start && end ? `${slotLabelFormatter.format(new Date(start))} - ${slotEndFormatter.format(new Date(end))}` : event.summary || 'Booked slot'
     }
   };
+}
+
+function buildConfirmationEmail(name, bookingDetails) {
+  const startDate = new Date(bookingDetails.slot.start);
+  const endDate = new Date(bookingDetails.slot.end);
+  const startLabel = slotEmailFormatter.format(startDate);
+  const endTimeLabel = slotEndFormatter.format(endDate).replace(/\s/g, '');
+  const meetLine = bookingDetails.meetLink
+    ? `Google Meet:\n${bookingDetails.meetLink}\n\n`
+    : '';
+
+  return {
+    subject: `Audition confirmed - ${startLabel} ${AUDITION_TIMEZONE}`,
+    text: [
+      `Hi ${name},`,
+      '',
+      'Your audition is confirmed.',
+      '',
+      'Time:',
+      `${startLabel} - ${endTimeLabel}`,
+      AUDITION_TIMEZONE,
+      '',
+      meetLine,
+      'If you need anything, reply to this email.',
+      '',
+      'AKHSBAC'
+    ].join('\n')
+  };
+}
+
+async function sendConfirmationEmail(name, recipientEmail, bookingDetails) {
+  if (!GOOGLE_GMAIL_USER) {
+    throw new Error('GOOGLE_GMAIL_USER must be configured to send confirmation emails.');
+  }
+
+  const gmail = getGmailClient();
+  const email = buildConfirmationEmail(name, bookingDetails);
+  const rawMessage = [
+    `From: AKHSBAC <${GOOGLE_GMAIL_USER}>`,
+    `To: ${recipientEmail}`,
+    `Subject: ${email.subject}`,
+    'Content-Type: text/plain; charset="UTF-8"',
+    'MIME-Version: 1.0',
+    'Content-Transfer-Encoding: 7bit',
+    '',
+    email.text
+  ].join('\r\n');
+
+  await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: {
+      raw: Buffer.from(rawMessage)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '')
+    }
+  });
 }
 
 function findExistingBookingForAttendee(events, email) {
@@ -475,10 +553,22 @@ app.post('/api/audition/book', async (req, res) => {
 
     const response = await createAuditionEvent(attendee.name, attendee.email, slot);
     const bookingDetails = buildBookingDetailsFromEvent(response.data);
+    let confirmationEmailSent = false;
+    let confirmationEmailError = '';
+
+    try {
+      await sendConfirmationEmail(attendee.name, attendee.email, bookingDetails);
+      confirmationEmailSent = true;
+    } catch (emailError) {
+      confirmationEmailError = emailError.message || 'Confirmation email could not be sent.';
+      console.error('Could not send audition confirmation email:', emailError);
+    }
 
     res.json({
       success: true,
       message: 'Your audition is booked. Check your email for the Google Calendar invitation.',
+      confirmationEmailSent,
+      confirmationEmailError,
       ...bookingDetails
     });
   } catch (error) {
