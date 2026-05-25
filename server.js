@@ -1060,7 +1060,7 @@ app.get('/api/race/status', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.status(404).type('text/plain').send('Not found');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/survey', (req, res) => {
