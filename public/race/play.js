@@ -7,6 +7,8 @@ const PLAYER_POLL_MS = {
 };
 
 const refs = {
+  playerBanner: document.getElementById('player-banner'),
+  playerBannerName: document.getElementById('player-banner-name'),
   previewScreen: document.getElementById('preview-screen'),
   previewName: document.getElementById('preview-name'),
   previewCake: document.getElementById('preview-cake'),
@@ -37,6 +39,7 @@ const playerState = {
   tapResetTimer: null,
   pollTimer: null,
   polling: false,
+  activating: false,
   lastRippleAt: 0
 };
 
@@ -102,19 +105,20 @@ function applyCakeTheme() {
   }
 
   const { bodyColor, frostingColor } = playerState.cakeData;
-  const gradient = `linear-gradient(135deg, ${bodyColor}, ${frostingColor})`;
-  const mutedGradient = `linear-gradient(135deg, ${bodyColor}80, ${frostingColor}80)`;
   const svg = generateCakeSVG(playerState.cakeData);
-
-  refs.previewScreen.style.background = gradient;
-  refs.tapScreen.style.background = gradient;
-  refs.winnerScreen.style.background = gradient;
-  refs.eliminatedScreen.style.background = mutedGradient;
+  document.documentElement.style.setProperty('--player-cake-body', bodyColor);
+  document.documentElement.style.setProperty('--player-cake-frosting', frostingColor);
 
   refs.previewCake.innerHTML = svg;
   refs.tapCake.innerHTML = svg;
   refs.eliminatedCake.innerHTML = svg;
   refs.winnerCake.innerHTML = svg;
+}
+
+function setPlayerName(name) {
+  const safeName = name || 'Cupcake ready';
+  refs.previewName.textContent = safeName;
+  refs.playerBannerName.textContent = safeName;
 }
 
 function showLoading(message = 'Joining race...') {
@@ -130,8 +134,9 @@ function showPreview(message, allowJoin = true) {
     refs.previewMessage.textContent = message;
   }
 
+  refs.joinButton.hidden = !allowJoin;
   refs.joinButton.disabled = !allowJoin;
-  refs.joinButton.textContent = allowJoin ? 'JOIN RACE' : 'ROUND IN PLAY';
+  refs.joinButton.textContent = allowJoin ? 'RETRY ENTRY' : 'ROUND IN PLAY';
   setScreen('preview');
 }
 
@@ -191,9 +196,9 @@ function updateTapCopy() {
 }
 
 function setPreviewCopy(data) {
-  refs.previewName.textContent = data.cakeName || 'Cake ready';
+  setPlayerName(data.cakeName || 'Cupcake ready');
   refs.previewMessage.textContent = data.canActivate
-    ? 'Tap when the round starts.'
+    ? 'You are in. Wait for the round to start.'
     : 'This round already started on another device.';
 }
 
@@ -221,7 +226,7 @@ function hydratePlayer(data) {
 
 async function loadPlayer(isRefresh = false) {
   if (!isRefresh) {
-    showLoading('Joining race...');
+    showLoading('Assigning your cupcake...');
   }
 
   try {
@@ -238,27 +243,35 @@ async function loadPlayer(isRefresh = false) {
     }
 
     hydratePlayer(data);
-    updateTapCopy();
 
     if (!playerState.pollTimer) {
       pollStatus();
     }
+
+    if (!playerState.visible && data.canActivate) {
+      await activatePlayer(true);
+      return;
+    }
+
+    updateTapCopy();
   } catch (error) {
     console.error('Error loading player:', error);
-    refs.previewName.textContent = 'Race unavailable';
+    setPlayerName('Race unavailable');
     refs.previewMessage.textContent = error.message || 'Connection error. Please refresh.';
+    refs.joinButton.hidden = true;
     refs.joinButton.disabled = true;
     refs.joinButton.textContent = 'WAITING';
     setScreen('preview');
   }
 }
 
-async function activatePlayer() {
-  if (!playerState.playerId) {
+async function activatePlayer(isAutomatic = false) {
+  if (!playerState.playerId || playerState.activating || playerState.visible) {
     return;
   }
 
-  showLoading('Jumping into the race...');
+  playerState.activating = true;
+  showLoading(isAutomatic ? 'Entering the race...' : 'Retrying entry...');
 
   try {
     const response = await fetch('/api/race/activate', {
@@ -278,7 +291,10 @@ async function activatePlayer() {
     updateTapCopy();
   } catch (error) {
     console.error('Error activating player:', error);
-    showPreview(error.message || 'Could not join this round.', false);
+    showPreview(error.message || 'Could not join this round.', true);
+    updateTapCopy();
+  } finally {
+    playerState.activating = false;
   }
 }
 
@@ -376,6 +392,7 @@ async function pollStatus() {
 
     playerState.visible = Boolean(player.visible);
     playerState.isEliminated = Boolean(player.eliminated);
+    setPlayerName(player.name || playerState.cakeData?.name || 'Cupcake ready');
 
     if (playerState.isEliminated) {
       showEliminated();
@@ -421,9 +438,9 @@ window.addEventListener('load', () => {
   installTouchGuards();
   playerState.deviceId = getOrCreateDeviceId();
 
-  refs.joinButton.addEventListener('click', activatePlayer);
+  refs.joinButton.addEventListener('click', () => activatePlayer(false));
   refs.tapScreen.addEventListener('pointerdown', handleTap);
 
-  showLoading('Joining race...');
+  showLoading('Assigning your cupcake...');
   loadPlayer();
 });

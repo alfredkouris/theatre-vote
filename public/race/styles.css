@@ -735,7 +735,7 @@ body {
 
 .lobby-hold {
   position: absolute;
-  inset: 30px 140px 30px 30px;
+  inset: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2386,5 +2386,461 @@ body {
 
   .control-buttons {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Theatre House Restyle ===== */
+
+:root {
+  --theatre-ink: #111111;
+  --theatre-paper: #f8f6f1;
+  --theatre-paper-strong: rgba(248, 246, 241, 0.96);
+  --theatre-paper-soft: rgba(248, 246, 241, 0.88);
+  --theatre-shadow: 0 14px 32px rgba(0, 0, 0, 0.16);
+  --theatre-shadow-deep: 0 22px 40px rgba(0, 0, 0, 0.18);
+  --theatre-rule: rgba(17, 17, 17, 0.18);
+  --player-cake-body: #d9c0a8;
+  --player-cake-frosting: #f3dfcf;
+}
+
+.game-display,
+.player-screen,
+.cupcake-gallery-body {
+  background:
+    linear-gradient(rgba(248, 246, 241, 0.76), rgba(248, 246, 241, 0.9)),
+    url('/bg.jpg') center center / cover no-repeat fixed;
+  color: var(--theatre-ink);
+}
+
+.game-display::before,
+.player-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(17, 17, 17, 0.06) 100%);
+  animation: none;
+  pointer-events: none;
+}
+
+.game-hud {
+  background: rgba(248, 246, 241, 0.94);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid var(--theatre-ink);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+.game-hud::after {
+  height: 4px;
+  background: linear-gradient(90deg, transparent 0%, rgba(17, 17, 17, 0.18) 12%, rgba(17, 17, 17, 0.48) 50%, rgba(17, 17, 17, 0.18) 88%, transparent 100%);
+  animation: none;
+}
+
+.round-badge,
+.scoreboard-timer,
+.hud-qr,
+.lobby-qr-badge,
+.results-screen,
+.race-lane,
+.result-card,
+.remaining-card,
+.cupcake-card {
+  background: var(--theatre-paper-strong);
+  border: 2px solid var(--theatre-ink);
+  box-shadow: var(--theatre-shadow);
+}
+
+.round-badge {
+  padding: 14px 30px;
+  border-radius: 18px;
+}
+
+.round-label,
+.timer-status,
+.results-kicker,
+.results-panel-heading,
+.hud-qr-label,
+.lobby-qr-label,
+.lane-name,
+.cupcake-card-id {
+  font-family: 'Courier New', monospace;
+  color: var(--theatre-ink);
+  letter-spacing: 0.18em;
+}
+
+.round-label,
+.timer-status,
+.results-kicker,
+.results-panel-heading,
+.hud-qr-label,
+.lobby-qr-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.round-number,
+.timer-value,
+.results-title,
+.podium-step,
+.preview-title,
+.preview-name,
+.player-banner-name,
+.cupcake-gallery-header h1 {
+  font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+  color: var(--theatre-ink);
+  text-shadow: none;
+}
+
+.timer-status {
+  text-shadow: none;
+}
+
+.timer-value {
+  min-width: 186px;
+  font-size: 62px;
+  letter-spacing: 2px;
+}
+
+.scoreboard-timer,
+.scoreboard-timer.warning {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: var(--theatre-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), var(--theatre-shadow);
+  animation: none;
+}
+
+.scoreboard-timer::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, transparent 54%, rgba(17, 17, 17, 0.06) 100%);
+}
+
+.scoreboard-timer.warning .timer-value,
+.timer-value {
+  color: var(--theatre-ink);
+  animation: none;
+}
+
+.hud-qr,
+.lobby-qr-badge {
+  position: relative;
+}
+
+.hud-qr::after,
+.lobby-qr-badge::after {
+  content: 'SCAN TO JOIN';
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--theatre-ink);
+  text-align: center;
+}
+
+.hud-qr #hud-qrcode,
+.lobby-qr-badge #qrcode {
+  background: #ffffff;
+  border: 2px solid var(--theatre-ink);
+}
+
+.racing-track::before {
+  background-image:
+    linear-gradient(90deg, transparent 49%, rgba(17, 17, 17, 0.06) 49%, rgba(17, 17, 17, 0.06) 51%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, rgba(17, 17, 17, 0.03) 49%, rgba(17, 17, 17, 0.03) 51%, transparent 51%);
+  opacity: 0.55;
+}
+
+.waiting-state {
+  font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+  color: var(--theatre-ink);
+  text-shadow: none;
+}
+
+.race-lane {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(242, 236, 227, 0.94) 100%);
+}
+
+.lane-position,
+.lane-name,
+.results-title,
+.results-subtitle,
+.result-card-name,
+.remaining-name,
+.podium-name,
+.results-empty {
+  color: var(--theatre-ink);
+}
+
+.lane-runway {
+  background:
+    repeating-linear-gradient(90deg, rgba(17, 17, 17, 0.07) 0 24px, rgba(255, 255, 255, 0.28) 24px 48px),
+    rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--theatre-ink);
+}
+
+.lane-bg {
+  border-color: rgba(17, 17, 17, 0.18);
+}
+
+.lane-leader-chip {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(248, 246, 241, 0.96);
+  border: 1px solid var(--theatre-ink);
+  color: var(--theatre-ink);
+}
+
+.race-lane.leading {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 225, 205, 0.94) 100%);
+  border-color: var(--theatre-ink);
+}
+
+.race-lane.leading .lane-bg,
+.race-lane:hover .lane-bg {
+  border-color: var(--theatre-ink);
+}
+
+.race-lane.leading .lane-position {
+  color: var(--theatre-ink);
+  text-shadow: none;
+}
+
+.results-screen {
+  background:
+    linear-gradient(180deg, rgba(248, 246, 241, 0.98) 0%, rgba(241, 235, 226, 0.96) 100%),
+    rgba(248, 246, 241, 0.94);
+  box-shadow: var(--theatre-shadow-deep);
+}
+
+.podium-step {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(234, 223, 204, 0.98) 100%);
+  border: 2px solid var(--theatre-ink);
+}
+
+.finish-line-area {
+  background: rgba(248, 246, 241, 0.94);
+  border-left: 2px solid var(--theatre-ink);
+}
+
+.finish-text,
+.finish-flag {
+  color: var(--theatre-ink);
+  text-shadow: none;
+}
+
+.racing-track {
+  background:
+    linear-gradient(180deg, rgba(248, 246, 241, 0.7) 0%, rgba(241, 235, 226, 0.8) 100%),
+    url('/bg.jpg') center center / cover no-repeat fixed;
+}
+
+.cupcake-gallery-body {
+  overflow-y: auto;
+}
+
+.cupcake-gallery-header h1 {
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cupcake-gallery-header p {
+  color: rgba(17, 17, 17, 0.76);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.cupcake-card {
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(244, 239, 232, 0.96) 100%);
+}
+
+.cupcake-card-name,
+.cupcake-card-id {
+  color: var(--theatre-ink);
+}
+
+.player-screen {
+  position: fixed;
+}
+
+.player-banner {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  left: 16px;
+  right: 16px;
+  z-index: 40;
+  padding: 12px 18px 14px;
+  background: var(--theatre-paper-strong);
+  border: 2px solid var(--theatre-ink);
+  border-radius: 18px;
+  box-shadow: var(--theatre-shadow);
+  text-align: center;
+}
+
+.player-banner-label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--theatre-ink);
+}
+
+.player-banner-name {
+  margin: 0;
+  font-size: clamp(28px, 7vw, 38px);
+  line-height: 0.96;
+  text-transform: uppercase;
+}
+
+.preview-screen,
+.tap-screen,
+.loading-screen,
+.eliminated-screen,
+.winner-screen-player {
+  position: relative;
+  z-index: 1;
+  padding: calc(env(safe-area-inset-top, 0px) + 138px) 24px 36px;
+  background:
+    linear-gradient(180deg, rgba(248, 246, 241, 0.76) 0%, rgba(248, 246, 241, 0.88) 100%),
+    radial-gradient(circle at top, rgba(var(--player-cake-frosting-rgb, 243, 223, 207), 0.22) 0%, transparent 50%);
+}
+
+.preview-screen::before,
+.tap-screen::before,
+.eliminated-screen::before {
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.5) 0%, transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(17, 17, 17, 0.05) 100%);
+  animation: none;
+}
+
+.preview-content,
+.loading-screen,
+.eliminated-screen,
+.winner-screen-player {
+  color: var(--theatre-ink);
+}
+
+.preview-content {
+  width: min(100%, 420px);
+  padding: 26px 24px 28px;
+  background: var(--theatre-paper-strong);
+  border: 2px solid var(--theatre-ink);
+  border-radius: 24px;
+  box-shadow: var(--theatre-shadow);
+}
+
+.preview-title {
+  margin-bottom: 12px;
+  font-size: 24px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview-name,
+.tap-prompt,
+.winner-screen-player h2,
+.eliminated-screen h2 {
+  color: var(--theatre-ink);
+  text-shadow: none;
+}
+
+.preview-message,
+.tap-instructions,
+.loading-screen p,
+.eliminated-message {
+  color: rgba(17, 17, 17, 0.82);
+  text-shadow: none;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.join-button {
+  background: var(--theatre-ink);
+  color: var(--theatre-paper);
+  border: 1px solid var(--theatre-ink);
+  box-shadow: none;
+}
+
+.join-button::before,
+.winner-screen-player::before,
+.winner-screen-player::after {
+  display: none;
+}
+
+.tap-cake,
+.preview-cake,
+.winner-cake-player,
+.eliminated-cake {
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.18));
+}
+
+.tap-prompt {
+  font-size: clamp(44px, 12vw, 72px);
+  letter-spacing: 0.14em;
+}
+
+.tap-instructions {
+  max-width: 320px;
+  text-align: center;
+}
+
+.loading-spinner {
+  border-color: rgba(17, 17, 17, 0.14);
+  border-top-color: var(--theatre-ink);
+  box-shadow: none;
+}
+
+.winner-screen-player h2 {
+  font-size: clamp(44px, 12vw, 68px);
+  letter-spacing: 0.08em;
+  animation: none;
+  filter: none;
+}
+
+.winner-cake-player {
+  filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.18));
+  animation-duration: 1.8s;
+}
+
+@media (max-width: 768px) {
+  .game-hud {
+    padding: 16px;
+  }
+
+  .round-badge,
+  .scoreboard-timer,
+  .hud-qr {
+    width: min(100%, 320px);
+    justify-content: center;
+  }
+
+  .timer-value {
+    min-width: 0;
+    font-size: 48px;
+  }
+
+  .player-banner {
+    left: 12px;
+    right: 12px;
+    padding: 10px 14px 12px;
+  }
+
+  .player-banner-name {
+    font-size: clamp(22px, 7vw, 30px);
+  }
+
+  .preview-screen,
+  .tap-screen,
+  .loading-screen,
+  .eliminated-screen,
+  .winner-screen-player {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 118px);
+  }
+
+  .preview-content {
+    padding: 22px 18px 24px;
   }
 }

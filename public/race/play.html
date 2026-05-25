@@ -22,14 +22,19 @@
   <script src="/race/cakes.js"></script>
 </head>
 <body class="player-screen">
+  <header class="player-banner" id="player-banner">
+    <span class="player-banner-label">Your Cupcake</span>
+    <h1 class="player-banner-name" id="player-banner-name">Assigning cupcake...</h1>
+  </header>
+
   <!-- Preview screen -->
   <div id="preview-screen" class="preview-screen">
     <div class="preview-content">
-      <h2 class="preview-title">Your Cake</h2>
+      <h2 class="preview-title">You are in</h2>
       <h1 class="preview-name" id="preview-name">Loading...</h1>
       <div class="preview-cake" id="preview-cake"></div>
-      <p class="preview-message" id="preview-message">Tap when the round starts.</p>
-      <button id="join-button" class="join-button">JOIN RACE</button>
+      <p class="preview-message" id="preview-message">Entering the race...</p>
+      <button id="join-button" class="join-button" hidden>RETRY ENTRY</button>
     </div>
   </div>
 
@@ -43,7 +48,7 @@
   <!-- Loading state -->
   <div id="loading-screen" class="loading-screen" style="display: none;">
     <div class="loading-spinner"></div>
-    <p>Joining race...</p>
+    <p>Assigning your cupcake...</p>
   </div>
 
   <!-- Eliminated state -->

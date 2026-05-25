@@ -457,6 +457,10 @@ async function sendConfirmationEmail(name, recipientEmail, bookingDetails) {
 
 function findExistingBookingForAttendee(events, email) {
   return events.find((event) => {
+    if (event.status === 'cancelled') {
+      return false;
+    }
+
     const registeredEmail = event.extendedProperties?.private?.registrationEmail;
     if (registeredEmail && registeredEmail.toLowerCase() === email) {
       return true;
