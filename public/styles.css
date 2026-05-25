@@ -360,7 +360,19 @@ body.survey-body {
   gap: 100px;
   justify-content: center;
   align-items: center;
-  padding-bottom: 40px;
+  padding-bottom: 24px;
+}
+
+.survey-support {
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #000000;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.55);
+  margin: 0;
 }
 
 .display-image-wrapper {
@@ -519,6 +531,11 @@ body.survey-body {
     gap: 60px;
   }
 
+  .survey-support {
+    font-size: 14px;
+    letter-spacing: 0.06em;
+  }
+
   .display-image-wrapper {
     width: 120px;
   }
@@ -573,6 +590,11 @@ body.survey-body {
 
   .images-row {
     gap: 40px;
+  }
+
+  .survey-support {
+    font-size: 11px;
+    letter-spacing: 0.04em;
   }
 
   .display-image-wrapper {
