@@ -2,150 +2,304 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cake Race - Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Race Control</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/race/styles.css">
+  <style>
+    * {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-admin-body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: env(safe-area-inset-top, 32px) 24px env(safe-area-inset-bottom, 32px);
+      background: #0a0a0a;
+      gap: 28px;
+      overflow-x: hidden;
+    }
+
+    .mobile-login,
+    .mobile-control {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .mobile-login {
+      align-items: center;
+      text-align: center;
+      gap: 32px;
+    }
+
+    .mobile-title {
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      font-size: clamp(36px, 9vw, 52px);
+      color: #f8f6f1;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+    }
+
+    .mobile-code-input {
+      width: 100%;
+      max-width: 260px;
+      font-family: 'Courier New', monospace;
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: 0.35em;
+      text-align: center;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      color: #f8f6f1;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .mobile-code-input:focus {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .mobile-code-input::placeholder {
+      color: rgba(255, 255, 255, 0.25);
+      letter-spacing: 0.25em;
+    }
+
+    .mobile-status-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 28px;
+      padding: 32px;
+      text-align: center;
+    }
+
+    .mobile-status-label {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 16px;
+    }
+
+    .mobile-status-value {
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      font-size: clamp(40px, 11vw, 64px);
+      color: #f8f6f1;
+      margin: 0;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .mobile-info {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .mobile-info-item {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 20px 16px;
+      text-align: center;
+    }
+
+    .mobile-info-label {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.45);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .mobile-info-value {
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      font-size: 38px;
+      color: #f8f6f1;
+      line-height: 1;
+    }
+
+    .mobile-btn {
+      width: 100%;
+      min-height: 96px;
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      font-size: 32px;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: #f8f6f1;
+      color: #0a0a0a;
+      border: none;
+      border-radius: 24px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 16px rgba(248, 246, 241, 0.2);
+    }
+
+    .mobile-btn:active {
+      transform: scale(0.96);
+      box-shadow: 0 2px 8px rgba(248, 246, 241, 0.15);
+    }
+
+    .mobile-btn:disabled {
+      opacity: 0.2;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .mobile-btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.7);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      font-size: 22px;
+      min-height: 72px;
+      margin-top: 12px;
+      box-shadow: none;
+    }
+
+    .mobile-btn-secondary:active {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .mobile-toast {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 0px) + 24px);
+      left: 24px;
+      right: 24px;
+      max-width: 500px;
+      margin: 0 auto;
+      background: #f8f6f1;
+      border: none;
+      border-radius: 20px;
+      padding: 22px 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 17px;
+      line-height: 1.4;
+      color: #0a0a0a;
+      text-align: center;
+      transform: translateY(-200%);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 9999;
+    }
+
+    .mobile-toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
 </head>
-<body class="admin-body">
-  <div class="admin-container">
-    <!-- Login Form -->
-    <div id="login-form" class="login-form">
-      <h2>🎮 Race Control Panel</h2>
-      <input type="password" id="password" placeholder="Admin Password" autocomplete="current-password">
-      <button onclick="login()" class="btn-primary">Login</button>
-      <p class="hint">Default password: theatre123</p>
-    </div>
-
-    <!-- Control Panel -->
-    <div id="control-panel" class="control-panel" style="display: none;">
-      <h2>🎮 Race Control Panel</h2>
-
-      <!-- Game State -->
-      <div class="state-section">
-        <div class="state-item">
-          <span class="label">Status:</span>
-          <span id="status" class="value status-badge">-</span>
-        </div>
-        <div class="state-item">
-          <span class="label">Current Round:</span>
-          <span id="current-round" class="value">-</span>
-        </div>
-        <div class="state-item">
-          <span class="label">Players:</span>
-          <span id="player-count" class="value">0</span>
-        </div>
-        <div class="state-item">
-          <span class="label">Active Players:</span>
-          <span id="active-count" class="value">0</span>
-        </div>
-      </div>
-
-      <!-- Control Buttons -->
-      <div class="control-buttons">
-        <button onclick="startRound()" id="start-btn" class="btn-success btn-large">
-          ▶️ Start Round
-        </button>
-        <button onclick="stopRound()" id="stop-btn" class="btn-warning btn-large" disabled>
-          ⏸️ Stop & Advance
-        </button>
-        <button onclick="resetGame()" class="btn-danger btn-large">
-          🔄 Reset Game
-        </button>
-      </div>
-
-      <!-- Player List -->
-      <div class="player-list-section">
-        <h3>Players</h3>
-        <div id="player-list" class="player-list"></div>
-      </div>
-
-      <!-- Round History -->
-      <div class="round-history-section">
-        <h3>Round History</h3>
-        <div id="round-history" class="round-history"></div>
-      </div>
-    </div>
+<body class="mobile-admin-body">
+  <!-- Login Form -->
+  <div id="login-form" class="mobile-login">
+    <h1 class="mobile-title">Race Control</h1>
+    <input
+      type="tel"
+      id="password"
+      class="mobile-code-input"
+      placeholder="- - - -"
+      maxlength="4"
+      pattern="[0-9]*"
+      inputmode="numeric"
+      autocomplete="off">
   </div>
 
-  <!-- Custom Alert/Toast System -->
-  <div id="custom-toast" class="custom-toast"></div>
-  <div id="custom-modal" class="custom-modal" style="display: none;">
-    <div class="modal-content">
-      <h3 id="modal-title"></h3>
-      <p id="modal-message"></p>
-      <div class="modal-buttons">
-        <button id="modal-cancel" class="btn-modal btn-cancel">Cancel</button>
-        <button id="modal-confirm" class="btn-modal btn-confirm">Confirm</button>
+  <!-- Control Panel -->
+  <div id="control-panel" class="mobile-control" style="display: none;">
+    <div class="mobile-status-card">
+      <div class="mobile-status-label">Status</div>
+      <h2 id="status" class="mobile-status-value">Waiting</h2>
+    </div>
+
+    <div class="mobile-info">
+      <div class="mobile-info-item">
+        <span class="mobile-info-label">Round</span>
+        <div id="current-round" class="mobile-info-value">-</div>
+      </div>
+      <div class="mobile-info-item">
+        <span class="mobile-info-label">Players</span>
+        <div id="player-count" class="mobile-info-value">0</div>
       </div>
     </div>
+
+    <button onclick="startRound()" id="start-btn" class="mobile-btn">
+      Start Round
+    </button>
+
+    <button onclick="stopRound()" id="stop-btn" class="mobile-btn" disabled>
+      Continue
+    </button>
+
+    <button onclick="resetGame()" class="mobile-btn mobile-btn-secondary">
+      Reset Game
+    </button>
   </div>
+
+  <!-- Toast -->
+  <div id="mobile-toast" class="mobile-toast"></div>
 
   <script>
+    const ADMIN_CODE = '1234';
     let adminPassword = null;
     let raceState = null;
 
-    // Custom Toast System
-    function showToast(message, type = 'info') {
-      const toast = document.getElementById('custom-toast');
+    // Toast System
+    function showToast(message) {
+      const toast = document.getElementById('mobile-toast');
       toast.textContent = message;
-      toast.className = `custom-toast ${type} show`;
+      toast.classList.add('show');
 
       setTimeout(() => {
         toast.classList.remove('show');
       }, 3000);
     }
 
-    // Custom Modal System
-    function showModal(title, message, onConfirm) {
-      const modal = document.getElementById('custom-modal');
-      document.getElementById('modal-title').textContent = title;
-      document.getElementById('modal-message').textContent = message;
+    // Login
+    const passwordInput = document.getElementById('password');
 
-      modal.style.display = 'flex';
+    passwordInput.addEventListener('input', (e) => {
+      const value = e.target.value;
 
-      const confirmBtn = document.getElementById('modal-confirm');
-      const cancelBtn = document.getElementById('modal-cancel');
-
-      const newConfirmBtn = confirmBtn.cloneNode(true);
-      const newCancelBtn = cancelBtn.cloneNode(true);
-
-      confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-      cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-
-      newConfirmBtn.onclick = () => {
-        modal.style.display = 'none';
-        onConfirm();
-      };
-
-      newCancelBtn.onclick = () => {
-        modal.style.display = 'none';
-      };
-    }
-
-    function login() {
-      adminPassword = document.getElementById('password').value;
-
-      if (!adminPassword) {
-        showToast('Please enter a password', 'error');
-        return;
+      if (value.length === 4) {
+        if (value === ADMIN_CODE) {
+          adminPassword = value;
+          document.getElementById('login-form').style.display = 'none';
+          document.getElementById('control-panel').style.display = 'flex';
+          startPolling();
+        } else {
+          showToast('Incorrect code');
+          passwordInput.value = '';
+        }
       }
+    });
 
-      // Hide login, show control panel
-      document.getElementById('login-form').style.display = 'none';
-      document.getElementById('control-panel').style.display = 'block';
-
-      // Start polling
-      startPolling();
-    }
-
-    document.getElementById('password').addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        login();
-      }
+    // Focus input on load
+    window.addEventListener('load', () => {
+      setTimeout(() => passwordInput.focus(), 300);
     });
 
     async function startRound() {
@@ -159,84 +313,86 @@
         const data = await response.json();
 
         if (data.success) {
-          showToast(`Round ${data.round} started!`, 'success');
+          showToast(`Round ${data.round} started`);
         } else {
-          showToast(`Error: ${data.error}`, 'error');
+          showToast(data.error || 'Failed to start');
         }
       } catch (error) {
-        showToast('Failed to start round', 'error');
+        showToast('Connection error');
         console.error(error);
       }
     }
 
     async function stopRound() {
-      showModal('Stop Round', 'Stop the current round and advance winners?', async () => {
-        try {
-          const response = await fetch('/api/race/admin/stop', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: adminPassword })
-          });
+      try {
+        const response = await fetch('/api/race/admin/stop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: adminPassword })
+        });
 
-          const data = await response.json();
+        const data = await response.json();
 
-          if (data.success) {
-            if (data.complete) {
-              const winner = raceState.players[data.winner];
-              showToast(`🎉 WINNER: ${winner.name}!`, 'success');
-            } else {
-              showToast(`Round complete! ${data.winners.length} players advance to Round ${data.nextRound}`, 'success');
-            }
+        if (data.success) {
+          if (data.complete) {
+            const winner = raceState.players[data.winner];
+            showToast(`Winner: ${winner.name}!`);
           } else {
-            showToast(`Error: ${data.error}`, 'error');
+            showToast('Round complete');
           }
-        } catch (error) {
-          showToast('Failed to stop round', 'error');
-          console.error(error);
+        } else {
+          showToast(data.error || 'Failed to stop');
         }
-      });
+      } catch (error) {
+        showToast('Connection error');
+        console.error(error);
+      }
     }
 
     async function resetGame() {
-      showModal('⚠️ Reset Game', 'Reset the entire game? This will clear all players and rounds!', async () => {
-        try {
-          const response = await fetch('/api/race/admin/reset', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: adminPassword })
-          });
+      if (!confirm('Reset the entire game?')) {
+        return;
+      }
 
-          const data = await response.json();
+      try {
+        const response = await fetch('/api/race/admin/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: adminPassword })
+        });
 
-          if (data.success) {
-            showToast('Game reset successfully!', 'success');
-          } else {
-            showToast(`Error: ${data.error}`, 'error');
-          }
-        } catch (error) {
-          showToast('Failed to reset game', 'error');
-          console.error(error);
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Game reset');
+        } else {
+          showToast(data.error || 'Failed to reset');
         }
-      });
+      } catch (error) {
+        showToast('Connection error');
+        console.error(error);
+      }
     }
 
     function updateDisplay(state) {
       raceState = state;
 
       // Update status
-      const statusBadge = document.getElementById('status');
-      const statusClass = state.status === 'results' ? 'round-complete' : state.status;
-      statusBadge.textContent = state.status === 'results' ? 'round complete' : state.status;
-      statusBadge.className = 'value status-badge status-' + statusClass;
+      const statusText = {
+        'waiting': 'Waiting',
+        'racing': 'Racing',
+        'results': 'Round Done',
+        'complete': 'Complete'
+      }[state.status] || state.status;
+
+      document.getElementById('status').textContent = statusText;
 
       // Update round
-      document.getElementById('current-round').textContent = state.currentRound || 'Waiting';
+      document.getElementById('current-round').textContent = state.currentRound || '-';
 
-      // Update player counts
+      // Update player count
       const totalPlayers = Object.keys(state.players).length;
-      const activePlayers = Object.values(state.players).filter(p => p.visible && !p.eliminated).length;
       document.getElementById('player-count').textContent = totalPlayers;
-      document.getElementById('active-count').textContent = activePlayers;
 
       // Update button states
       const startBtn = document.getElementById('start-btn');
@@ -249,96 +405,6 @@
         startBtn.disabled = false;
         stopBtn.disabled = true;
       }
-
-      // Update player list
-      updatePlayerList(state);
-
-      // Update round history
-      updateRoundHistory(state);
-    }
-
-    function updatePlayerList(state) {
-      const container = document.getElementById('player-list');
-      const players = Object.values(state.players);
-
-      if (players.length === 0) {
-        container.innerHTML = '<p class="empty-state">No players yet</p>';
-        return;
-      }
-
-      // Sort by current distance (if racing)
-      const currentRound = state.rounds[state.currentRound];
-      const sortedPlayers = players.sort((a, b) => {
-        if (!currentRound) return 0;
-        const distA = currentRound.positions[a.id] || 0;
-        const distB = currentRound.positions[b.id] || 0;
-        return distB - distA;
-      });
-
-      container.innerHTML = sortedPlayers.map(player => {
-        const distance = currentRound ? (currentRound.positions[player.id] || 0) : 0;
-        const taps = currentRound ? (currentRound.taps[player.id] || 0) : 0;
-        const meters = Math.floor(distance / 10);
-
-        const statusClass = player.eliminated ? 'eliminated' : player.visible ? 'active' : 'pending';
-        const statusText = player.eliminated
-          ? '❌ Eliminated'
-          : !player.visible
-            ? '⏳ Reserved'
-            : state.status === 'racing' && player.currentRound === state.currentRound
-              ? '🏁 Racing'
-              : state.status === 'results' && player.currentRound === state.currentRound
-                ? '🏆 Qualified'
-              : '✅ Ready';
-
-        return `
-          <div class="player-item ${statusClass}">
-            <span class="player-name">${player.name}</span>
-            <span class="player-stats">
-              ${meters}m | ${taps} taps
-            </span>
-            <span class="player-status">
-              ${statusText}
-            </span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function updateRoundHistory(state) {
-      const container = document.getElementById('round-history');
-      const rounds = Object.values(state.rounds);
-
-      if (rounds.length === 0) {
-        container.innerHTML = '<p class="empty-state">No rounds yet</p>';
-        return;
-      }
-
-      container.innerHTML = rounds.map(round => {
-        const roundNum = round.participants ? Object.keys(state.rounds).find(key => state.rounds[key] === round) : '?';
-        const participants = round.participants ? round.participants.length : 0;
-        const winners = round.winners ? round.winners.length : 0;
-        const isLatestResult = Number(roundNum) === state.lastResult?.roundNumber && state.status === 'results';
-        const status = isLatestResult
-          ? '🏆 Results'
-          : round.endTime
-            ? '✅ Complete'
-            : round.startTime
-              ? '🏁 Racing'
-              : '⏳ Waiting';
-
-        return `
-          <div class="round-item">
-            <div class="round-header">
-              <strong>Round ${roundNum}</strong>
-              <span>${status}</span>
-            </div>
-            <div class="round-details">
-              Players: ${participants} | Winners: ${winners}
-            </div>
-          </div>
-        `;
-      }).join('');
     }
 
     async function pollStatus() {
