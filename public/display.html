@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Survey Display - Best Chef</title>
+  <link rel="stylesheet" href="/styles.css?v=3">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="survey-body">
+  <div class="survey-fullscreen">
+    <h1 class="survey-title">Who is the better chef?</h1>
+
+    <div class="survey-content">
+      <div class="column-graph">
+        <div class="bars-container">
+          <div class="bar-column">
+            <div class="column-bar-fill column-bar-julia" id="julia-bar">
+              <div class="column-count" id="julia-count">0</div>
+            </div>
+          </div>
+          <div class="bar-column">
+            <div class="column-bar-fill column-bar-betty" id="betty-bar">
+              <div class="column-count" id="betty-count">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="labels-container">
+          <div class="column-label">Julia Child</div>
+          <div class="column-label">Betty Crocker</div>
+        </div>
+      </div>
+
+      <div class="qr-container">
+        <div id="qrcode"></div>
+      </div>
+    </div>
+
+    <div class="images-row">
+      <div class="display-image-wrapper">
+        <img src="/julia-child.jpg" alt="Julia Child" class="display-chef-image">
+      </div>
+      <div class="display-image-wrapper">
+        <img src="/betty%20crocker.jpg" alt="Betty Crocker" class="display-chef-image">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const surveyUrl = `${window.location.origin}/survey/vote`;
+    let clickCount = 0;
+    let clickTimer = null;
+    let previousVotes = { julia: 0, betty: 0 };
+
+    function renderQrCode() {
+      const qrContainer = document.getElementById('qrcode');
+      qrContainer.innerHTML = '';
+
+      new QRCode(qrContainer, {
+        text: surveyUrl,
+        width: 200,
+        height: 200,
+        colorDark: '#111111',
+        colorLight: '#ffffff'
+      });
+    }
+
+    function updateDisplay(votes) {
+      const julia = Number(votes.julia) || 0;
+      const betty = Number(votes.betty) || 0;
+      const total = julia + betty;
+      const juliaPercent = total === 0 ? 0 : Math.round((julia / total) * 100);
+      const bettyPercent = total === 0 ? 0 : 100 - juliaPercent;
+
+      const hasChanged = julia !== previousVotes.julia || betty !== previousVotes.betty;
+
+      document.getElementById('julia-count').textContent = julia;
+      document.getElementById('betty-count').textContent = betty;
+
+      const juliaBar = document.getElementById('julia-bar');
+      const bettyBar = document.getElementById('betty-bar');
+
+      juliaBar.style.height = `${juliaPercent}%`;
+      bettyBar.style.height = `${bettyPercent}%`;
+
+      if (hasChanged) {
+        juliaBar.classList.add('animate');
+        bettyBar.classList.add('animate');
+
+        setTimeout(() => {
+          juliaBar.classList.remove('animate');
+          bettyBar.classList.remove('animate');
+        }, 600);
+
+        previousVotes = { julia, betty };
+      }
+    }
+
+    async function fetchVotes() {
+      try {
+        const response = await fetch('/api/votes');
+        const votes = await response.json();
+        updateDisplay(votes);
+      } catch (error) {
+        console.error('Error fetching votes:', error);
+      }
+    }
+
+    async function resetVotes() {
+      try {
+        await fetch('/api/reset', { method: 'POST' });
+        fetchVotes();
+      } catch (error) {
+        console.error('Error resetting votes:', error);
+      }
+    }
+
+    document.getElementById('qrcode').addEventListener('click', () => {
+      clickCount++;
+
+      if (clickTimer) {
+        clearTimeout(clickTimer);
+      }
+
+      if (clickCount === 3) {
+        resetVotes();
+        clickCount = 0;
+      } else {
+        clickTimer = setTimeout(() => {
+          clickCount = 0;
+        }, 500);
+      }
+    });
+
+    renderQrCode();
+    fetchVotes();
+    window.setInterval(fetchVotes, 500);
+  </script>
+</body>
+</html>

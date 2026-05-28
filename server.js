@@ -1064,7 +1064,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/survey', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'display.html'));
 });
 
 app.get('/survey/vote', (req, res) => {
@@ -1072,7 +1072,7 @@ app.get('/survey/vote', (req, res) => {
 });
 
 app.get('/survey/display', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'display.html'));
 });
 
 app.get('/audition', (req, res) => {
