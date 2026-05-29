@@ -78,17 +78,50 @@
       width: 100%;
       max-width: 450px;
       height: auto;
-      margin: 0 auto 30px;
+      margin: 0 auto 20px;
       display: block;
     }
 
-    .show-details {
+    .venue-logos {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .venue-logo {
+      max-width: 100px;
+      height: auto;
+    }
+
+    .blake-beckett {
       text-align: center;
-      font-size: 12px;
-      letter-spacing: 0.1em;
-      margin-bottom: 40px;
-      padding-bottom: 30px;
-      border-bottom: 1px solid #d4c9b3;
+      font-size: 14px;
+      font-style: italic;
+      color: #6a5d4d;
+      margin-top: 20px;
+    }
+
+    .special-intro {
+      text-align: center;
+      font-size: 16px;
+      font-style: italic;
+      line-height: 1.7;
+      margin-bottom: 25px;
+      color: #4a423a;
+      max-width: 550px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .creative-team-subtitle {
+      text-align: center;
+      font-size: 15px;
+      color: #6a5d4d;
+      font-style: italic;
+      margin-bottom: 30px;
     }
 
     .ornament {
@@ -265,6 +298,18 @@
       .venue-name {
         font-size: 15px;
       }
+
+      .special-intro {
+        font-size: 18px;
+      }
+
+      .blake-beckett {
+        font-size: 15px;
+      }
+
+      .creative-team-subtitle {
+        font-size: 16px;
+      }
     }
 
     /* Desktop */
@@ -295,7 +340,6 @@
     <div class="corner-bottom-right"></div>
 
     <img src="/logo.png" alt="Alfred Kouris & Harry Stacey Bake a Cake" class="logo">
-    <p class="show-details">2–7 JUNE 2026 • OLD FITZ THEATRE</p>
 
     <!-- A Note from the Chefs -->
     <h2 class="section-title">A Note from the Chefs</h2>
@@ -315,21 +359,18 @@
     <!-- Entrée -->
     <h2 class="section-title">Entrée</h2>
 
-    <div class="venue-item">
-      <div class="venue-name">Old Fitz Theatre</div>
-      <div class="venue-note">(Logo TBC)</div>
+    <div class="venue-logos">
+      <img src="/old-fitz-logo.png" alt="Old Fitz Theatre" class="venue-logo">
+      <img src="/irreg.png" alt="Irregular Programming" class="venue-logo">
     </div>
 
-    <div class="venue-item">
-      <div class="venue-name">Irregular Programming</div>
-      <div class="venue-note">(Logo TBC)</div>
-    </div>
+    <p class="blake-beckett">With thanks to The Blake Beckett Trust</p>
 
     <div class="ornament">◈ ◈ ◈</div>
 
     <!-- Main -->
     <h2 class="section-title">Main</h2>
-    <p style="text-align: center; font-size: 12px; color: #6a5d4d; font-style: italic; margin-bottom: 30px;">Creative Team</p>
+    <p class="creative-team-subtitle">Creative Team</p>
 
     <div class="creative-team">
       <div class="menu-item">
@@ -367,7 +408,7 @@
 
     <!-- Tonight's Special -->
     <h2 class="section-title">Tonight's Special</h2>
-    <p style="text-align: center; font-size: 13px; font-style: italic; margin-bottom: 20px;">With thanks</p>
+    <p class="special-intro">Our greatest of thanks go to the following people, without whom this show (and this cake) would not be possible</p>
     <div class="thanks-grid">
       <div>Philip Quast</div>
       <div>Clara Voda</div>
@@ -386,6 +427,18 @@
       <div>Holly Mazzola</div>
       <div>Sophie Douglas</div>
       <div>Victoria Xu</div>
+      <div>Alex Seton</div>
+      <div>Teatro at the Italian Forum</div>
+      <div>Lynda Van Der Weegen</div>
+      <div>PERSON WHO DID 3D PRINT</div>
+      <div>GUY WHO FILMED US WITH TALIA</div>
+      <div>Hamza El Ballaj</div>
+      <div>Harlee Timms</div>
+      <div>Colin Zibara</div>
+      <div>Fabio Jaconelli</div>
+      <div>Mehhma Malhi</div>
+      <div>NIDA</div>
+      <div>Max Shaw</div>
     </div>
   </div>
 </body>
