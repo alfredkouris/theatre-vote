@@ -13,375 +13,366 @@
 
     body {
       font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
-      background: url('/bg.jpg') center center / cover no-repeat fixed;
-      color: #000000;
+      background: #f5f1e8;
+      color: #2c2416;
       line-height: 1.6;
       padding: 20px 15px;
       min-height: 100vh;
     }
 
-    .programme {
-      max-width: 800px;
+    .menu {
+      max-width: 650px;
       margin: 0 auto;
-      padding: 30px 20px;
+      background: #fdfcf8;
+      padding: 40px 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      position: relative;
     }
 
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-      padding-bottom: 20px;
-      border-bottom: 2px solid rgba(0, 0, 0, 0.3);
+    /* Art Deco Corner Decorations */
+    .corner-top-left,
+    .corner-bottom-right {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      opacity: 0.15;
+    }
+
+    .corner-top-left {
+      top: 0;
+      left: 0;
+      border-top: 1px solid #2c2416;
+      border-left: 1px solid #2c2416;
+    }
+
+    .corner-top-left::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 0 0, transparent 0%, transparent 48%, #2c2416 48%, #2c2416 49%, transparent 49%);
+      background-size: 10px 10px;
+    }
+
+    .corner-bottom-right {
+      bottom: 0;
+      right: 0;
+      border-bottom: 1px solid #2c2416;
+      border-right: 1px solid #2c2416;
+    }
+
+    .corner-bottom-right::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 100% 100%, transparent 0%, transparent 48%, #2c2416 48%, #2c2416 49%, transparent 49%);
+      background-size: 10px 10px;
     }
 
     .logo {
       width: 100%;
-      max-width: 500px;
+      max-width: 450px;
       height: auto;
-      margin: 0 auto 20px;
+      margin: 0 auto 30px;
       display: block;
-      filter: drop-shadow(2px 2px 4px rgba(255, 255, 255, 0.3));
     }
 
     .show-details {
-      font-size: 13px;
-      color: #000000;
-      letter-spacing: 0.05em;
-      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+      text-align: center;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      margin-bottom: 40px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid #d4c9b3;
+    }
+
+    .ornament {
+      text-align: center;
+      font-size: 14px;
+      color: #d4c9b3;
+      margin: 30px 0;
+      letter-spacing: 0.3em;
     }
 
     .section-title {
       font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
-      font-size: 24px;
-      font-weight: 700;
-      font-style: italic;
+      font-size: 18px;
+      font-weight: 400;
+      letter-spacing: 0.3em;
       text-align: center;
-      color: #000000;
-      margin: 40px 0 25px;
-      letter-spacing: 0.05em;
       text-transform: uppercase;
-      text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+      margin: 40px 0 25px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #d4c9b3;
     }
 
     .chefs-note-text {
-      margin: 30px 0;
-      font-size: 15px;
-      line-height: 1.8;
-      text-align: justify;
-      background: rgba(255, 255, 255, 0.92);
-      padding: 25px 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      font-size: 13px;
+      line-height: 1.9;
+      text-align: center;
+      max-width: 500px;
+      margin: 0 auto 20px;
     }
 
     .chefs-note-text p {
-      margin-bottom: 18px;
-    }
-
-    .chefs-note-text .signature {
-      text-align: right;
-      font-style: italic;
-      margin-top: 25px;
-    }
-
-    .creative-team {
-      margin: 30px 0;
-    }
-
-    .team-member {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      margin-bottom: 35px;
-    }
-
-    .headshot {
-      width: 140px;
-      height: 140px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 3px solid rgba(0, 0, 0, 0.2);
       margin-bottom: 15px;
     }
 
-    .member-info {
-      width: 100%;
+    .chefs-note-text .signature {
+      margin-top: 25px;
+      font-style: italic;
     }
 
-    .member-name {
+    .menu-item {
+      margin-bottom: 35px;
+      text-align: center;
+    }
+
+    .item-name {
       font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
-      font-size: 20px;
+      font-size: 15px;
       font-weight: 700;
       font-style: italic;
-      color: #000000;
-      margin-bottom: 5px;
-      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+      text-transform: uppercase;
     }
 
-    .member-role {
-      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+    .item-role {
+      font-size: 12px;
       font-style: italic;
-      font-size: 15px;
-      color: #000000;
-      margin-bottom: 12px;
-      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+      color: #6a5d4d;
+      margin-bottom: 10px;
     }
 
-    .member-bio {
-      font-size: 14px;
-      color: #000000;
-      line-height: 1.6;
-      max-width: 600px;
+    .item-description {
+      font-size: 12px;
+      line-height: 1.7;
+      color: #4a423a;
+      max-width: 450px;
       margin: 0 auto;
-      background: rgba(255, 255, 255, 0.92);
-      padding: 15px;
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-    .venue-section {
+    .headshot {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 1px solid #d4c9b3;
+      margin: 0 auto 12px;
+      display: block;
+    }
+
+    .thanks-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 20px;
+      font-size: 12px;
       text-align: center;
-      margin: 40px 0 25px;
-      padding: 25px 20px;
-      background: rgba(255, 255, 255, 0.92);
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .venue-item {
+      margin-bottom: 20px;
+      text-align: center;
     }
 
     .venue-name {
       font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
-      font-size: 20px;
+      font-size: 14px;
       font-weight: 700;
       font-style: italic;
-      color: #000000;
-      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
-    .venue-logo-placeholder {
-      font-size: 13px;
-      color: #666666;
+    .venue-note {
+      font-size: 11px;
+      color: #8a7d6d;
       font-style: italic;
-    }
-
-    .thanks-section {
-      margin: 40px 0;
-      padding: 25px 20px;
-      background: rgba(255, 255, 255, 0.92);
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    }
-
-    .thanks-list {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 6px;
-      margin-top: 20px;
-    }
-
-    .thanks-name {
-      font-size: 14px;
-      color: #000000;
-      text-align: center;
-    }
-
-    .divider {
-      height: 2px;
-      background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.2), transparent);
-      margin: 35px 0;
+      margin-top: 4px;
     }
 
     /* Tablet and up */
     @media (min-width: 600px) {
       body {
-        padding: 30px 25px;
+        padding: 40px 20px;
       }
 
-      .programme {
-        padding: 50px 40px;
+      .menu {
+        padding: 60px 50px;
+      }
+
+      .corner-top-left,
+      .corner-bottom-right {
+        width: 100px;
+        height: 100px;
       }
 
       .logo {
-        max-width: 600px;
+        max-width: 500px;
+      }
+
+      .show-details {
+        font-size: 13px;
       }
 
       .section-title {
-        font-size: 28px;
+        font-size: 20px;
       }
 
       .chefs-note-text {
+        font-size: 14px;
+      }
+
+      .item-name {
         font-size: 16px;
       }
 
-      .thanks-list {
+      .item-role {
+        font-size: 13px;
+      }
+
+      .item-description {
+        font-size: 13px;
+      }
+
+      .thanks-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        font-size: 13px;
+      }
+
+      .venue-name {
+        font-size: 15px;
       }
     }
 
     /* Desktop */
     @media (min-width: 900px) {
-      body {
-        padding: 40px;
+      .menu {
+        padding: 80px 70px;
       }
 
-      .programme {
-        padding: 60px 50px;
+      .corner-top-left,
+      .corner-bottom-right {
+        width: 120px;
+        height: 120px;
       }
 
       .logo {
-        max-width: 700px;
+        max-width: 550px;
       }
 
-      .team-member {
-        flex-direction: row;
-        align-items: flex-start;
-        text-align: left;
-        gap: 25px;
-      }
-
-      .headshot {
-        width: 120px;
-        height: 120px;
-        flex-shrink: 0;
-        margin-bottom: 0;
-      }
-
-      .member-info {
-        flex: 1;
-      }
-
-      .member-bio {
-        margin: 0;
-      }
-
-      .thanks-list {
+      .thanks-grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="programme">
-    <div class="header">
-      <img src="/logo.png" alt="Alfred Kouris & Harry Stacey Bake a Cake" class="logo">
-      <p class="show-details">2–7 June 2026 • Old Fitz Theatre</p>
-    </div>
+  <div class="menu">
+    <div class="corner-top-left"></div>
+    <div class="corner-bottom-right"></div>
+
+    <img src="/logo.png" alt="Alfred Kouris & Harry Stacey Bake a Cake" class="logo">
+    <p class="show-details">2–7 JUNE 2026 • OLD FITZ THEATRE</p>
 
     <!-- A Note from the Chefs -->
     <h2 class="section-title">A Note from the Chefs</h2>
     <div class="chefs-note-text">
       <p>Tonight, we will attempt to bake a cake live on stage.</p>
-
       <p>Not a metaphorical cake. Not a symbolic cake. A real cake. With ingredients and measurements and timing and consequences. A cake that can collapse. A cake that can burn. A cake that, like theatre itself, exists only for us in this room tonight.</p>
-
-      <p>When we first began making this show, we talked about the liveness of theatre. Its immediacy. Its danger. Harry had just seen a show in rural Vermont with a printer on stage - printing. Printing images onto paper that became essential props for the actors. Early on, it jammed. For real. And the cast had to fix it in front of the audience's eyes. Dangerous. Real. Live. We wanted to find our version of this. What could we do that had very real consequences and could very easily go wrong...</p>
-
+      <p>When we first began making this show, we talked about the liveness of theatre. Its immediacy. Its danger. We wanted to find something that had very real consequences and could very easily go wrong.</p>
       <p>And then we thought about cake.</p>
-
-      <p>And cake, for reasons we still don't fully understand, seems to matter enormously to people.</p>
-
-      <p>Maybe it's because cakes are inherently optimistic. Nobody bakes a cake for a funeral. Cakes arrive at birthdays, weddings, office farewells, apologies, reconciliations. They are edible acts of hope. Even a badly baked cake means someone tried.</p>
-
-      <p>This show was built the same way many cakes are. Messily. Experimentally. Sometimes with too much heat. Sometimes not enough. There were moments we thought the whole thing may never rise. But somehow, through sheer panic, determination, and an alarming amount of vanilla extract, it became something we are deeply proud to share with you.</p>
-
-      <p>Thank you for being here. Thank you for choosing live theatre over convenience, over streaming, over staying home. Your presence is part of the recipe.</p>
-
-      <p>We hope tonight leaves you feeling slightly fuller than when you arrived.</p>
-
-      <p>Bon appétit,</p>
-
-      <p class="signature">Alfred Kouris & Harry Stacey xx</p>
+      <p>Cakes are inherently optimistic. Nobody bakes a cake for a funeral. Cakes arrive at birthdays, weddings, office farewells, apologies, reconciliations. They are edible acts of hope.</p>
+      <p>This show was built the same way many cakes are. Messily. Experimentally. Sometimes with too much heat. Sometimes not enough. But somehow, through sheer panic, determination, and an alarming amount of vanilla extract, it became something we are deeply proud to share with you.</p>
+      <p>Thank you for being here. Thank you for choosing live theatre over convenience, over streaming, over staying home.</p>
+      <p class="signature">Bon appétit,<br>Alfred Kouris & Harry Stacey xx</p>
     </div>
 
-    <div class="divider"></div>
+    <div class="ornament">◈ ◈ ◈</div>
 
-    <!-- Special Thanks -->
-    <div class="thanks-section">
-      <h2 class="section-title" style="margin-top: 0;">Entrée</h2>
-      <div class="thanks-list">
-        <p class="thanks-name">Philip Quast</p>
-        <p class="thanks-name">Clara Voda</p>
-        <p class="thanks-name">Allison Bennett</p>
-        <p class="thanks-name">Violetta Brau Mugica</p>
-        <p class="thanks-name">David Ratcliffe</p>
-        <p class="thanks-name">Camille Gerrard</p>
-        <p class="thanks-name">Jasper Cruden</p>
-        <p class="thanks-name">Alice Annetts</p>
-        <p class="thanks-name">Chesterman Creative</p>
-        <p class="thanks-name">Teresa Li</p>
-        <p class="thanks-name">James Wily</p>
-        <p class="thanks-name">Emilia Higgs</p>
-        <p class="thanks-name">Samuel McGown</p>
-        <p class="thanks-name">Chloe Callow</p>
-        <p class="thanks-name">Holly Mazzola</p>
-        <p class="thanks-name">Sophie Douglas</p>
-        <p class="thanks-name">Victoria Xu</p>
-      </div>
+    <!-- Entrée -->
+    <h2 class="section-title">Entrée</h2>
+    <div class="thanks-grid">
+      <div>Philip Quast</div>
+      <div>Clara Voda</div>
+      <div>Allison Bennett</div>
+      <div>Violetta Brau Mugica</div>
+      <div>David Ratcliffe</div>
+      <div>Camille Gerrard</div>
+      <div>Jasper Cruden</div>
+      <div>Alice Annetts</div>
+      <div>Chesterman Creative</div>
+      <div>Teresa Li</div>
+      <div>James Wily</div>
+      <div>Emilia Higgs</div>
+      <div>Samuel McGown</div>
+      <div>Chloe Callow</div>
+      <div>Holly Mazzola</div>
+      <div>Sophie Douglas</div>
+      <div>Victoria Xu</div>
     </div>
 
-    <div class="divider"></div>
+    <div class="ornament">◈ ◈ ◈</div>
 
-    <!-- Creative Team -->
+    <!-- Main -->
     <h2 class="section-title">Main</h2>
-    <div class="creative-team">
-      <div class="team-member">
-        <img src="/alfred-kouris.jpg" alt="Alfred Kouris" class="headshot">
-        <div class="member-info">
-          <h3 class="member-name">Alfred Kouris</h3>
-          <p class="member-role">Writer, Director & Performer</p>
-          <p class="member-bio">Alfred Kouris is a Sydney-based theatre maker, writer, and performer. His work explores the intersection of live performance and everyday ritual, creating intimate experiences that blur the boundaries between audience and participant.</p>
-        </div>
-      </div>
 
-      <div class="team-member">
-        <img src="/harry-stacey.jpg" alt="Harry Stacey" class="headshot">
-        <div class="member-info">
-          <h3 class="member-name">Harry Stacey</h3>
-          <p class="member-role">Writer, Director & Performer</p>
-          <p class="member-bio">Harry Stacey is a theatre maker and performer known for his innovative approach to live performance. His practice embraces risk, spontaneity, and the unique magic that can only happen in the shared space between performer and audience.</p>
-        </div>
-      </div>
-
-      <div class="team-member">
-        <img src="/talia-benater.jpg" alt="Talia Benater" class="headshot">
-        <div class="member-info">
-          <h3 class="member-name">Talia Benater</h3>
-          <p class="member-role">Producer</p>
-          <p class="member-bio">Talia Benater is a Sydney-based producer and creative collaborator passionate about supporting bold, experimental theatre. She brings vision and dedication to every project, ensuring artists can take risks and audiences can discover new experiences.</p>
-        </div>
-      </div>
-
-      <div class="team-member">
-        <img src="/jasmine-power.jpg" alt="Jasmine Power" class="headshot">
-        <div class="member-info">
-          <h3 class="member-name">Jasmine Power</h3>
-          <p class="member-role">Stage Manager</p>
-          <p class="member-bio">Jasmine Power is a skilled stage manager with a keen eye for detail and a calm presence in the chaos of live performance. Her technical expertise and collaborative spirit ensure smooth operations both on and off stage.</p>
-        </div>
-      </div>
-
-      <div class="team-member">
-        <img src="/thomas-shepherd.jpg" alt="Thomas Shepherd" class="headshot">
-        <div class="member-info">
-          <h3 class="member-name">Thomas Shepherd</h3>
-          <p class="member-role">Lighting & Sound Design</p>
-          <p class="member-bio">Thomas Shepherd is a lighting and sound designer whose work creates atmospheric and immersive environments. His thoughtful design choices enhance the storytelling and heighten the audience's sensory experience.</p>
-        </div>
-      </div>
+    <div class="menu-item">
+      <img src="/alfred-kouris.jpg" alt="Alfred Kouris" class="headshot">
+      <div class="item-name">Alfred Kouris</div>
+      <div class="item-role">Writer, Director & Performer</div>
+      <div class="item-description">Sydney-based theatre maker creating intimate experiences that blur the boundaries between audience and participant</div>
     </div>
 
-    <div class="divider"></div>
+    <div class="menu-item">
+      <img src="/harry-stacey.jpg" alt="Harry Stacey" class="headshot">
+      <div class="item-name">Harry Stacey</div>
+      <div class="item-role">Writer, Director & Performer</div>
+      <div class="item-description">Theatre maker embracing risk, spontaneity, and the unique magic that can only happen in the shared space between performer and audience</div>
+    </div>
 
-    <!-- Venues & Companies -->
+    <div class="menu-item">
+      <img src="/talia-benater.jpg" alt="Talia Benater" class="headshot">
+      <div class="item-name">Talia Benater</div>
+      <div class="item-role">Producer</div>
+      <div class="item-description">Producer and creative collaborator supporting bold, experimental theatre with vision and dedication</div>
+    </div>
+
+    <div class="menu-item">
+      <img src="/jasmine-power.jpg" alt="Jasmine Power" class="headshot">
+      <div class="item-name">Jasmine Power</div>
+      <div class="item-role">Stage Manager</div>
+      <div class="item-description">Stage manager with a keen eye for detail and calm presence ensuring smooth operations on and off stage</div>
+    </div>
+
+    <div class="menu-item">
+      <img src="/thomas-shepherd.jpg" alt="Thomas Shepherd" class="headshot">
+      <div class="item-name">Thomas Shepherd</div>
+      <div class="item-role">Lighting & Sound Design</div>
+      <div class="item-description">Designer creating atmospheric and immersive environments that enhance storytelling and heighten sensory experience</div>
+    </div>
+
+    <div class="ornament">◈ ◈ ◈</div>
+
+    <!-- Dessert -->
     <h2 class="section-title">Dessert</h2>
-    <div class="venue-section">
-      <h3 class="venue-name">Old Fitz Theatre</h3>
-      <p class="venue-logo-placeholder">(Logo TBC)</p>
+
+    <div class="venue-item">
+      <div class="venue-name">Old Fitz Theatre</div>
+      <div class="venue-note">(Logo TBC)</div>
     </div>
 
-    <div class="venue-section">
-      <h3 class="venue-name">Irregular Programming</h3>
-      <p class="venue-logo-placeholder">(Logo TBC)</p>
+    <div class="venue-item">
+      <div class="venue-name">Irregular Programming</div>
+      <div class="venue-note">(Logo TBC)</div>
     </div>
   </div>
 </body>
