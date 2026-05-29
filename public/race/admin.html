@@ -21,11 +21,53 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       padding: env(safe-area-inset-top, 32px) 24px env(safe-area-inset-bottom, 32px);
       background: #0a0a0a;
       gap: 28px;
       overflow-x: hidden;
+    }
+
+    .tab-container {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.4);
+      color: #f8f6f1;
+    }
+
+    .tab-content {
+      display: none;
+      width: 100%;
+      max-width: 500px;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .tab-content.active {
+      display: flex;
     }
 
     .mobile-login,
@@ -230,33 +272,52 @@
 
   <!-- Control Panel -->
   <div id="control-panel" class="mobile-control" style="display: none;">
-    <div class="mobile-status-card">
-      <div class="mobile-status-label">Status</div>
-      <h2 id="status" class="mobile-status-value">Waiting</h2>
+    <div class="tab-container">
+      <button class="tab-btn active" onclick="switchTab('race')">Race</button>
+      <button class="tab-btn" onclick="switchTab('survey')">Survey</button>
     </div>
 
-    <div class="mobile-info">
-      <div class="mobile-info-item">
-        <span class="mobile-info-label">Round</span>
-        <div id="current-round" class="mobile-info-value">-</div>
+    <!-- RACE TAB -->
+    <div id="race-tab" class="tab-content active">
+      <div class="mobile-status-card">
+        <div class="mobile-status-label">Status</div>
+        <h2 id="status" class="mobile-status-value">Waiting</h2>
       </div>
-      <div class="mobile-info-item">
-        <span class="mobile-info-label">Players</span>
-        <div id="player-count" class="mobile-info-value">0</div>
+
+      <div class="mobile-info">
+        <div class="mobile-info-item">
+          <span class="mobile-info-label">Round</span>
+          <div id="current-round" class="mobile-info-value">-</div>
+        </div>
+        <div class="mobile-info-item">
+          <span class="mobile-info-label">Players</span>
+          <div id="player-count" class="mobile-info-value">0</div>
+        </div>
       </div>
+
+      <button onclick="startRound()" id="start-btn" class="mobile-btn">
+        Start Round
+      </button>
+
+      <button onclick="stopRound()" id="stop-btn" class="mobile-btn" disabled>
+        Continue
+      </button>
+
+      <button onclick="resetGame()" class="mobile-btn mobile-btn-secondary">
+        Reset Game
+      </button>
     </div>
 
-    <button onclick="startRound()" id="start-btn" class="mobile-btn">
-      Start Round
-    </button>
+    <!-- SURVEY TAB -->
+    <div id="survey-tab" class="tab-content">
+      <button onclick="resetSurvey()" class="mobile-btn">
+        Reset Survey
+      </button>
 
-    <button onclick="stopRound()" id="stop-btn" class="mobile-btn" disabled>
-      Continue
-    </button>
-
-    <button onclick="resetGame()" class="mobile-btn mobile-btn-secondary">
-      Reset Game
-    </button>
+      <button onclick="toggleAlfredNumber()" id="alfred-btn" class="mobile-btn">
+        Show Alfred Number
+      </button>
+    </div>
   </div>
 
   <!-- Toast -->
@@ -266,6 +327,7 @@
     const ADMIN_CODE = '1234';
     let adminPassword = null;
     let raceState = null;
+    let alfredNumberVisible = false;
 
     // Toast System
     function showToast(message) {
@@ -420,6 +482,67 @@
     function startPolling() {
       pollStatus();
       setInterval(pollStatus, 1000);
+    }
+
+    // Tab switching
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
+
+    // Survey controls
+    async function resetSurvey() {
+      if (!confirm('Reset all survey votes?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/survey/admin/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: adminPassword })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Survey reset');
+        } else {
+          showToast(data.error || 'Failed to reset');
+        }
+      } catch (error) {
+        showToast('Connection error');
+        console.error(error);
+      }
+    }
+
+    async function toggleAlfredNumber() {
+      try {
+        const response = await fetch('/api/survey/admin/toggle-alfred', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: adminPassword })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alfredNumberVisible = data.visible;
+          const btn = document.getElementById('alfred-btn');
+          btn.textContent = alfredNumberVisible ? 'Hide Alfred Number' : 'Show Alfred Number';
+          showToast(alfredNumberVisible ? 'Alfred number shown' : 'Alfred number hidden');
+        } else {
+          showToast(data.error || 'Failed to toggle');
+        }
+      } catch (error) {
+        showToast('Connection error');
+        console.error(error);
+      }
     }
   </script>
 </body>

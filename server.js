@@ -480,6 +480,9 @@ let votes = {
   betty: 0
 };
 
+// Survey admin state
+let surveyAlfredVisible = false;
+
 // Get current votes
 app.get('/api/votes', (req, res) => {
   res.json(votes);
@@ -501,6 +504,33 @@ app.post('/api/vote', (req, res) => {
 app.post('/api/reset', (req, res) => {
   votes = { julia: 0, betty: 0 };
   res.json({ success: true, votes });
+});
+
+// Survey admin endpoints
+app.post('/api/survey/admin/reset', (req, res) => {
+  const { password } = req.body;
+
+  if (password !== RACE_ADMIN_PASSWORD) {
+    return res.status(401).json({ success: false, error: 'Invalid password' });
+  }
+
+  votes = { julia: 0, betty: 0 };
+  res.json({ success: true, votes });
+});
+
+app.post('/api/survey/admin/toggle-alfred', (req, res) => {
+  const { password } = req.body;
+
+  if (password !== RACE_ADMIN_PASSWORD) {
+    return res.status(401).json({ success: false, error: 'Invalid password' });
+  }
+
+  surveyAlfredVisible = !surveyAlfredVisible;
+  res.json({ success: true, visible: surveyAlfredVisible });
+});
+
+app.get('/api/survey/alfred-status', (req, res) => {
+  res.json({ visible: surveyAlfredVisible });
 });
 
 // ===== AUDITIONS =====
@@ -659,7 +689,7 @@ app.post('/api/audition/book', async (req, res) => {
 // ===== CAKE RACE GAME =====
 
 // Admin password (from environment or default)
-const RACE_ADMIN_PASSWORD = process.env.RACE_ADMIN_PASSWORD || 'theatre123';
+const RACE_ADMIN_PASSWORD = process.env.RACE_ADMIN_PASSWORD || '1234';
 
 const CAKE_NAMES = [
   "Red Velvet Dream", "Strawberry Swirl", "Cherry Bomb", "Raspberry Delight", "Watermelon Wonder",
