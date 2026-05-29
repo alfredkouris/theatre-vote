@@ -128,9 +128,18 @@
       font-style: italic;
     }
 
+    .creative-team {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 35px;
+    }
+
     .menu-item {
-      margin-bottom: 35px;
       text-align: center;
+    }
+
+    .menu-item:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
     }
 
     .item-name {
@@ -242,6 +251,11 @@
         font-size: 13px;
       }
 
+      .creative-team {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px 30px;
+      }
+
       .thanks-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
@@ -298,47 +312,6 @@
 
     <div class="ornament">◈ ◈ ◈</div>
 
-    <!-- Main -->
-    <h2 class="section-title">Main</h2>
-    <p style="text-align: center; font-size: 12px; color: #6a5d4d; font-style: italic; margin-bottom: 30px;">Creative Team</p>
-
-    <div class="menu-item">
-      <img src="/alfred-kouris.jpg" alt="Alfred Kouris" class="headshot">
-      <div class="item-name">Alfred Kouris</div>
-      <div class="item-role">Writer, Director & Performer</div>
-      <div class="item-description">Sydney-based theatre maker creating intimate experiences that blur the boundaries between audience and participant</div>
-    </div>
-
-    <div class="menu-item">
-      <img src="/harry-stacey.jpg" alt="Harry Stacey" class="headshot">
-      <div class="item-name">Harry Stacey</div>
-      <div class="item-role">Writer, Director & Performer</div>
-      <div class="item-description">Theatre maker embracing risk, spontaneity, and the unique magic that can only happen in the shared space between performer and audience</div>
-    </div>
-
-    <div class="menu-item">
-      <img src="/talia-benater.jpg" alt="Talia Benater" class="headshot">
-      <div class="item-name">Talia Benater</div>
-      <div class="item-role">Producer</div>
-      <div class="item-description">Producer and creative collaborator supporting bold, experimental theatre with vision and dedication</div>
-    </div>
-
-    <div class="menu-item">
-      <img src="/jasmine-power.jpg" alt="Jasmine Power" class="headshot">
-      <div class="item-name">Jasmine Power</div>
-      <div class="item-role">Stage Manager</div>
-      <div class="item-description">Stage manager with a keen eye for detail and calm presence ensuring smooth operations on and off stage</div>
-    </div>
-
-    <div class="menu-item">
-      <img src="/thomas-shepherd.jpg" alt="Thomas Shepherd" class="headshot">
-      <div class="item-name">Thomas Shepherd</div>
-      <div class="item-role">Lighting & Sound Design</div>
-      <div class="item-description">Designer creating atmospheric and immersive environments that enhance storytelling and heighten sensory experience</div>
-    </div>
-
-    <div class="ornament">◈ ◈ ◈</div>
-
     <!-- Entrée -->
     <h2 class="section-title">Entrée</h2>
 
@@ -350,6 +323,44 @@
     <div class="venue-item">
       <div class="venue-name">Irregular Programming</div>
       <div class="venue-note">(Logo TBC)</div>
+    </div>
+
+    <div class="ornament">◈ ◈ ◈</div>
+
+    <!-- Main -->
+    <h2 class="section-title">Main</h2>
+    <p style="text-align: center; font-size: 12px; color: #6a5d4d; font-style: italic; margin-bottom: 30px;">Creative Team</p>
+
+    <div class="creative-team">
+      <div class="menu-item">
+        <img src="/alfred-kouris.jpg" alt="Alfred Kouris" class="headshot">
+        <div class="item-name">Alfred Kouris</div>
+        <div class="item-role">Writer, Director & Performer</div>
+      </div>
+
+      <div class="menu-item">
+        <img src="/harry-stacey.jpg" alt="Harry Stacey" class="headshot">
+        <div class="item-name">Harry Stacey</div>
+        <div class="item-role">Writer, Director & Performer</div>
+      </div>
+
+      <div class="menu-item">
+        <img src="/talia-benater.jpg" alt="Talia Benater" class="headshot">
+        <div class="item-name">Talia Benater</div>
+        <div class="item-role">Producer</div>
+      </div>
+
+      <div class="menu-item">
+        <img src="/jasmine-power.jpg" alt="Jasmine Power" class="headshot">
+        <div class="item-name">Jasmine Power</div>
+        <div class="item-role">Stage Manager</div>
+      </div>
+
+      <div class="menu-item">
+        <img src="/thomas-shepherd.jpg" alt="Thomas Shepherd" class="headshot">
+        <div class="item-name">Thomas Shepherd</div>
+        <div class="item-role">Lighting & Sound Design</div>
+      </div>
     </div>
 
     <div class="ornament">◈ ◈ ◈</div>
