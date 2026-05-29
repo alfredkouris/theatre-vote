@@ -23,42 +23,30 @@
     .programme {
       max-width: 800px;
       margin: 0 auto;
-      background: rgba(255, 255, 255, 0.95);
       padding: 30px 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      border: 2px solid rgba(0, 0, 0, 0.1);
     }
 
     .header {
       text-align: center;
       margin-bottom: 40px;
       padding-bottom: 20px;
-      border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+      border-bottom: 2px solid rgba(0, 0, 0, 0.3);
     }
 
-    .show-title {
-      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
-      font-size: 32px;
-      font-weight: 700;
-      font-style: italic;
-      letter-spacing: 0.02em;
-      color: #000000;
-      margin-bottom: 12px;
-      line-height: 1.2;
-    }
-
-    .show-subtitle {
-      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
-      font-style: italic;
-      font-size: 16px;
-      color: #333333;
-      margin-bottom: 15px;
+    .logo {
+      width: 100%;
+      max-width: 500px;
+      height: auto;
+      margin: 0 auto 20px;
+      display: block;
+      filter: drop-shadow(2px 2px 4px rgba(255, 255, 255, 0.3));
     }
 
     .show-details {
       font-size: 13px;
-      color: #555555;
+      color: #000000;
       letter-spacing: 0.05em;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
     }
 
     .section-title {
@@ -71,6 +59,7 @@
       margin: 40px 0 25px;
       letter-spacing: 0.05em;
       text-transform: uppercase;
+      text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
     }
 
     .chefs-note-text {
@@ -78,6 +67,10 @@
       font-size: 15px;
       line-height: 1.8;
       text-align: justify;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 25px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     }
 
     .chefs-note-text p {
@@ -122,30 +115,37 @@
       font-style: italic;
       color: #000000;
       margin-bottom: 5px;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
     }
 
     .member-role {
       font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
       font-style: italic;
       font-size: 15px;
-      color: #555555;
+      color: #000000;
       margin-bottom: 12px;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
     }
 
     .member-bio {
       font-size: 14px;
-      color: #333333;
+      color: #000000;
       line-height: 1.6;
       max-width: 600px;
       margin: 0 auto;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
     .venue-section {
       text-align: center;
       margin: 40px 0 25px;
       padding: 25px 20px;
-      background: rgba(0, 0, 0, 0.05);
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     }
 
     .venue-name {
@@ -166,8 +166,9 @@
     .thanks-section {
       margin: 40px 0;
       padding: 25px 20px;
-      background: rgba(0, 0, 0, 0.05);
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     }
 
     .thanks-list {
@@ -179,7 +180,7 @@
 
     .thanks-name {
       font-size: 14px;
-      color: #333333;
+      color: #000000;
       text-align: center;
     }
 
@@ -199,12 +200,8 @@
         padding: 50px 40px;
       }
 
-      .show-title {
-        font-size: 42px;
-      }
-
-      .show-subtitle {
-        font-size: 18px;
+      .logo {
+        max-width: 600px;
       }
 
       .section-title {
@@ -228,6 +225,10 @@
 
       .programme {
         padding: 60px 50px;
+      }
+
+      .logo {
+        max-width: 700px;
       }
 
       .team-member {
@@ -262,8 +263,7 @@
 <body>
   <div class="programme">
     <div class="header">
-      <h1 class="show-title">Alfred Kouris & Harry Stacey<br>Bake a Cake</h1>
-      <p class="show-subtitle">A Live Performance</p>
+      <img src="/logo.png" alt="Alfred Kouris & Harry Stacey Bake a Cake" class="logo">
       <p class="show-details">2–7 June 2026 • Old Fitz Theatre</p>
     </div>
 
@@ -295,8 +295,34 @@
 
     <div class="divider"></div>
 
+    <!-- Special Thanks -->
+    <div class="thanks-section">
+      <h2 class="section-title" style="margin-top: 0;">Entrée</h2>
+      <div class="thanks-list">
+        <p class="thanks-name">Philip Quast</p>
+        <p class="thanks-name">Clara Voda</p>
+        <p class="thanks-name">Allison Bennett</p>
+        <p class="thanks-name">Violetta Brau Mugica</p>
+        <p class="thanks-name">David Ratcliffe</p>
+        <p class="thanks-name">Camille Gerrard</p>
+        <p class="thanks-name">Jasper Cruden</p>
+        <p class="thanks-name">Alice Annetts</p>
+        <p class="thanks-name">Chesterman Creative</p>
+        <p class="thanks-name">Teresa Li</p>
+        <p class="thanks-name">James Wily</p>
+        <p class="thanks-name">Emilia Higgs</p>
+        <p class="thanks-name">Samuel McGown</p>
+        <p class="thanks-name">Chloe Callow</p>
+        <p class="thanks-name">Holly Mazzola</p>
+        <p class="thanks-name">Sophie Douglas</p>
+        <p class="thanks-name">Victoria Xu</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
     <!-- Creative Team -->
-    <h2 class="section-title">Creative Team</h2>
+    <h2 class="section-title">Main</h2>
     <div class="creative-team">
       <div class="team-member">
         <img src="/alfred-kouris.jpg" alt="Alfred Kouris" class="headshot">
@@ -347,6 +373,7 @@
     <div class="divider"></div>
 
     <!-- Venues & Companies -->
+    <h2 class="section-title">Dessert</h2>
     <div class="venue-section">
       <h3 class="venue-name">Old Fitz Theatre</h3>
       <p class="venue-logo-placeholder">(Logo TBC)</p>
@@ -355,32 +382,6 @@
     <div class="venue-section">
       <h3 class="venue-name">Irregular Programming</h3>
       <p class="venue-logo-placeholder">(Logo TBC)</p>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- Special Thanks -->
-    <div class="thanks-section">
-      <h2 class="section-title" style="margin-top: 0;">Special Thanks</h2>
-      <div class="thanks-list">
-        <p class="thanks-name">Philip Quast</p>
-        <p class="thanks-name">Clara Voda</p>
-        <p class="thanks-name">Allison Bennett</p>
-        <p class="thanks-name">Violetta Brau Mugica</p>
-        <p class="thanks-name">David Ratcliffe</p>
-        <p class="thanks-name">Camille Gerrard</p>
-        <p class="thanks-name">Jasper Cruden</p>
-        <p class="thanks-name">Alice Annetts</p>
-        <p class="thanks-name">Chesterman Creative</p>
-        <p class="thanks-name">Teresa Li</p>
-        <p class="thanks-name">James Wily</p>
-        <p class="thanks-name">Emilia Higgs</p>
-        <p class="thanks-name">Samuel McGown</p>
-        <p class="thanks-name">Chloe Callow</p>
-        <p class="thanks-name">Holly Mazzola</p>
-        <p class="thanks-name">Sophie Douglas</p>
-        <p class="thanks-name">Victoria Xu</p>
-      </div>
     </div>
   </div>
 </body>
