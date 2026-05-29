@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Alfred Kouris & Harry Stacey Bake a Cake - Programme</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -15,209 +12,249 @@
     }
 
     body {
-      font-family: 'Lato', sans-serif;
-      background: #f5f1e8;
-      color: #2c2416;
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      background: url('/bg.jpg') center center / cover no-repeat fixed;
+      color: #000000;
       line-height: 1.6;
-      padding: 40px 20px;
+      padding: 20px 15px;
+      min-height: 100vh;
     }
 
     .programme {
       max-width: 800px;
       margin: 0 auto;
-      background: #fdfcf8;
-      padding: 60px 50px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      border: 1px solid #e8e0d0;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 2px solid rgba(0, 0, 0, 0.1);
     }
 
     .header {
       text-align: center;
-      margin-bottom: 50px;
-      padding-bottom: 30px;
-      border-bottom: 1px solid #d4c9b3;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid rgba(0, 0, 0, 0.2);
     }
 
     .show-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 42px;
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      font-size: 32px;
       font-weight: 700;
+      font-style: italic;
       letter-spacing: 0.02em;
-      color: #c67b4a;
-      margin-bottom: 15px;
+      color: #000000;
+      margin-bottom: 12px;
       line-height: 1.2;
     }
 
     .show-subtitle {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
       font-style: italic;
-      font-size: 18px;
-      color: #6a5d4d;
-      margin-bottom: 20px;
+      font-size: 16px;
+      color: #333333;
+      margin-bottom: 15px;
     }
 
     .show-details {
-      font-size: 14px;
-      color: #8a7d6d;
+      font-size: 13px;
+      color: #555555;
       letter-spacing: 0.05em;
     }
 
     .section-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 28px;
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      font-size: 24px;
       font-weight: 700;
+      font-style: italic;
       text-align: center;
-      color: #c67b4a;
-      margin: 50px 0 30px;
+      color: #000000;
+      margin: 40px 0 25px;
       letter-spacing: 0.05em;
       text-transform: uppercase;
     }
 
-    .chefs-note {
-      margin: 40px 0;
+    .chefs-note-text {
+      margin: 30px 0;
+      font-size: 15px;
+      line-height: 1.8;
+      text-align: justify;
     }
 
-    .chefs-note img {
-      width: 100%;
-      height: auto;
-      border: 1px solid #e8e0d0;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    .chefs-note-text p {
+      margin-bottom: 18px;
+    }
+
+    .chefs-note-text .signature {
+      text-align: right;
+      font-style: italic;
+      margin-top: 25px;
     }
 
     .creative-team {
-      margin: 40px 0;
+      margin: 30px 0;
     }
 
     .team-member {
       display: flex;
-      gap: 25px;
-      margin-bottom: 40px;
-      align-items: flex-start;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 35px;
     }
 
     .headshot {
-      width: 120px;
-      height: 120px;
+      width: 140px;
+      height: 140px;
       object-fit: cover;
       border-radius: 50%;
-      border: 3px solid #d4c9b3;
-      flex-shrink: 0;
+      border: 3px solid rgba(0, 0, 0, 0.2);
+      margin-bottom: 15px;
     }
 
     .member-info {
-      flex: 1;
+      width: 100%;
     }
 
     .member-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px;
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      font-size: 20px;
       font-weight: 700;
-      color: #2c2416;
+      font-style: italic;
+      color: #000000;
       margin-bottom: 5px;
     }
 
     .member-role {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
       font-style: italic;
-      font-size: 16px;
-      color: #8a7d6d;
-      margin-bottom: 10px;
+      font-size: 15px;
+      color: #555555;
+      margin-bottom: 12px;
     }
 
     .member-bio {
       font-size: 14px;
-      color: #4a423a;
+      color: #333333;
       line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto;
     }
 
     .venue-section {
       text-align: center;
-      margin: 50px 0 30px;
-      padding: 30px;
-      background: #f8f5f0;
-      border: 1px solid #e8e0d0;
+      margin: 40px 0 25px;
+      padding: 25px 20px;
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.1);
     }
 
     .venue-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 24px;
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      font-size: 20px;
       font-weight: 700;
-      color: #2c2416;
-      margin-bottom: 10px;
+      font-style: italic;
+      color: #000000;
+      margin-bottom: 8px;
     }
 
     .venue-logo-placeholder {
-      font-size: 14px;
-      color: #8a7d6d;
+      font-size: 13px;
+      color: #666666;
       font-style: italic;
     }
 
     .thanks-section {
       margin: 40px 0;
-      padding: 30px;
-      background: #f8f5f0;
-      border: 1px solid #e8e0d0;
+      padding: 25px 20px;
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.1);
     }
 
     .thanks-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 8px;
+      grid-template-columns: 1fr;
+      gap: 6px;
       margin-top: 20px;
     }
 
     .thanks-name {
-      font-size: 15px;
-      color: #4a423a;
+      font-size: 14px;
+      color: #333333;
       text-align: center;
     }
 
     .divider {
-      height: 1px;
-      background: linear-gradient(to right, transparent, #d4c9b3, transparent);
-      margin: 40px 0;
+      height: 2px;
+      background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.2), transparent);
+      margin: 35px 0;
     }
 
-    @media (max-width: 768px) {
-      .programme {
-        padding: 40px 30px;
-      }
-
-      .show-title {
-        font-size: 32px;
-      }
-
-      .team-member {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
-
-      .headshot {
-        width: 150px;
-        height: 150px;
-      }
-
-      .thanks-list {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 480px) {
+    /* Tablet and up */
+    @media (min-width: 600px) {
       body {
-        padding: 20px 10px;
+        padding: 30px 25px;
       }
 
       .programme {
-        padding: 30px 20px;
+        padding: 50px 40px;
       }
 
       .show-title {
-        font-size: 26px;
+        font-size: 42px;
+      }
+
+      .show-subtitle {
+        font-size: 18px;
       }
 
       .section-title {
-        font-size: 22px;
+        font-size: 28px;
+      }
+
+      .chefs-note-text {
+        font-size: 16px;
+      }
+
+      .thanks-list {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* Desktop */
+    @media (min-width: 900px) {
+      body {
+        padding: 40px;
+      }
+
+      .programme {
+        padding: 60px 50px;
+      }
+
+      .team-member {
+        flex-direction: row;
+        align-items: flex-start;
+        text-align: left;
+        gap: 25px;
+      }
+
+      .headshot {
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+        margin-bottom: 0;
+      }
+
+      .member-info {
+        flex: 1;
+      }
+
+      .member-bio {
+        margin: 0;
+      }
+
+      .thanks-list {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
       }
     }
   </style>
@@ -231,9 +268,29 @@
     </div>
 
     <!-- A Note from the Chefs -->
-    <h2 class="section-title">Chef's Note</h2>
-    <div class="chefs-note">
-      <img src="/chefs-note.jpg" alt="A Note from the Chefs">
+    <h2 class="section-title">A Note from the Chefs</h2>
+    <div class="chefs-note-text">
+      <p>Tonight, we will attempt to bake a cake live on stage.</p>
+
+      <p>Not a metaphorical cake. Not a symbolic cake. A real cake. With ingredients and measurements and timing and consequences. A cake that can collapse. A cake that can burn. A cake that, like theatre itself, exists only for us in this room tonight.</p>
+
+      <p>When we first began making this show, we talked about the liveness of theatre. Its immediacy. Its danger. Harry had just seen a show in rural Vermont with a printer on stage - printing. Printing images onto paper that became essential props for the actors. Early on, it jammed. For real. And the cast had to fix it in front of the audience's eyes. Dangerous. Real. Live. We wanted to find our version of this. What could we do that had very real consequences and could very easily go wrong...</p>
+
+      <p>And then we thought about cake.</p>
+
+      <p>And cake, for reasons we still don't fully understand, seems to matter enormously to people.</p>
+
+      <p>Maybe it's because cakes are inherently optimistic. Nobody bakes a cake for a funeral. Cakes arrive at birthdays, weddings, office farewells, apologies, reconciliations. They are edible acts of hope. Even a badly baked cake means someone tried.</p>
+
+      <p>This show was built the same way many cakes are. Messily. Experimentally. Sometimes with too much heat. Sometimes not enough. There were moments we thought the whole thing may never rise. But somehow, through sheer panic, determination, and an alarming amount of vanilla extract, it became something we are deeply proud to share with you.</p>
+
+      <p>Thank you for being here. Thank you for choosing live theatre over convenience, over streaming, over staying home. Your presence is part of the recipe.</p>
+
+      <p>We hope tonight leaves you feeling slightly fuller than when you arrived.</p>
+
+      <p>Bon appétit,</p>
+
+      <p class="signature">Alfred Kouris & Harry Stacey xx</p>
     </div>
 
     <div class="divider"></div>
