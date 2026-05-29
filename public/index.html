@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alfred Kouris & Harry Stacey Bake a Cake</title>
+  <title>Alfred Kouris & Harry Stacey Bake a Cake - Programme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -11,38 +14,317 @@
       box-sizing: border-box;
     }
 
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-
     body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
+      font-family: 'Lato', sans-serif;
+      background: #f5f1e8;
+      color: #2c2416;
+      line-height: 1.6;
+      padding: 40px 20px;
     }
 
-    a {
-      display: block;
-      max-width: 100%;
-      max-height: 100vh;
-      line-height: 0;
+    .programme {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fdfcf8;
+      padding: 60px 50px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e8e0d0;
     }
 
-    img {
-      display: block;
-      max-width: 100%;
-      max-height: 100vh;
-      width: auto;
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid #d4c9b3;
+    }
+
+    .show-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #c67b4a;
+      margin-bottom: 15px;
+      line-height: 1.2;
+    }
+
+    .show-subtitle {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 18px;
+      color: #6a5d4d;
+      margin-bottom: 20px;
+    }
+
+    .show-details {
+      font-size: 14px;
+      color: #8a7d6d;
+      letter-spacing: 0.05em;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+      color: #c67b4a;
+      margin: 50px 0 30px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .chefs-note {
+      margin: 40px 0;
+    }
+
+    .chefs-note img {
+      width: 100%;
       height: auto;
-      object-fit: contain;
+      border: 1px solid #e8e0d0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .creative-team {
+      margin: 40px 0;
+    }
+
+    .team-member {
+      display: flex;
+      gap: 25px;
+      margin-bottom: 40px;
+      align-items: flex-start;
+    }
+
+    .headshot {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid #d4c9b3;
+      flex-shrink: 0;
+    }
+
+    .member-info {
+      flex: 1;
+    }
+
+    .member-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #2c2416;
+      margin-bottom: 5px;
+    }
+
+    .member-role {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 16px;
+      color: #8a7d6d;
+      margin-bottom: 10px;
+    }
+
+    .member-bio {
+      font-size: 14px;
+      color: #4a423a;
+      line-height: 1.6;
+    }
+
+    .venue-section {
+      text-align: center;
+      margin: 50px 0 30px;
+      padding: 30px;
+      background: #f8f5f0;
+      border: 1px solid #e8e0d0;
+    }
+
+    .venue-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #2c2416;
+      margin-bottom: 10px;
+    }
+
+    .venue-logo-placeholder {
+      font-size: 14px;
+      color: #8a7d6d;
+      font-style: italic;
+    }
+
+    .thanks-section {
+      margin: 40px 0;
+      padding: 30px;
+      background: #f8f5f0;
+      border: 1px solid #e8e0d0;
+    }
+
+    .thanks-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .thanks-name {
+      font-size: 15px;
+      color: #4a423a;
+      text-align: center;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, #d4c9b3, transparent);
+      margin: 40px 0;
+    }
+
+    @media (max-width: 768px) {
+      .programme {
+        padding: 40px 30px;
+      }
+
+      .show-title {
+        font-size: 32px;
+      }
+
+      .team-member {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .headshot {
+        width: 150px;
+        height: 150px;
+      }
+
+      .thanks-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 20px 10px;
+      }
+
+      .programme {
+        padding: 30px 20px;
+      }
+
+      .show-title {
+        font-size: 26px;
+      }
+
+      .section-title {
+        font-size: 22px;
+      }
     }
   </style>
 </head>
 <body>
-  <a href="https://www.oldfitztheatre.com.au/alfred-kouris-and-harry-stacey-bake-a-cake" target="_blank" rel="noopener noreferrer">
-    <img src="/cake-show.jpg" alt="Alfred Kouris & Harry Stacey Bake a Cake - 2-7 June at Old Fitz Theatre">
-  </a>
+  <div class="programme">
+    <div class="header">
+      <h1 class="show-title">Alfred Kouris & Harry Stacey<br>Bake a Cake</h1>
+      <p class="show-subtitle">A Live Performance</p>
+      <p class="show-details">2–7 June 2026 • Old Fitz Theatre</p>
+    </div>
+
+    <!-- A Note from the Chefs -->
+    <h2 class="section-title">Chef's Note</h2>
+    <div class="chefs-note">
+      <img src="/chefs-note.jpg" alt="A Note from the Chefs">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Creative Team -->
+    <h2 class="section-title">Creative Team</h2>
+    <div class="creative-team">
+      <div class="team-member">
+        <img src="/alfred-kouris.jpg" alt="Alfred Kouris" class="headshot">
+        <div class="member-info">
+          <h3 class="member-name">Alfred Kouris</h3>
+          <p class="member-role">Writer, Director & Performer</p>
+          <p class="member-bio">Alfred Kouris is a Sydney-based theatre maker, writer, and performer. His work explores the intersection of live performance and everyday ritual, creating intimate experiences that blur the boundaries between audience and participant.</p>
+        </div>
+      </div>
+
+      <div class="team-member">
+        <img src="/harry-stacey.jpg" alt="Harry Stacey" class="headshot">
+        <div class="member-info">
+          <h3 class="member-name">Harry Stacey</h3>
+          <p class="member-role">Writer, Director & Performer</p>
+          <p class="member-bio">Harry Stacey is a theatre maker and performer known for his innovative approach to live performance. His practice embraces risk, spontaneity, and the unique magic that can only happen in the shared space between performer and audience.</p>
+        </div>
+      </div>
+
+      <div class="team-member">
+        <img src="/talia-benater.jpg" alt="Talia Benater" class="headshot">
+        <div class="member-info">
+          <h3 class="member-name">Talia Benater</h3>
+          <p class="member-role">Producer</p>
+          <p class="member-bio">Talia Benater is a Sydney-based producer and creative collaborator passionate about supporting bold, experimental theatre. She brings vision and dedication to every project, ensuring artists can take risks and audiences can discover new experiences.</p>
+        </div>
+      </div>
+
+      <div class="team-member">
+        <img src="/jasmine-power.jpg" alt="Jasmine Power" class="headshot">
+        <div class="member-info">
+          <h3 class="member-name">Jasmine Power</h3>
+          <p class="member-role">Stage Manager</p>
+          <p class="member-bio">Jasmine Power is a skilled stage manager with a keen eye for detail and a calm presence in the chaos of live performance. Her technical expertise and collaborative spirit ensure smooth operations both on and off stage.</p>
+        </div>
+      </div>
+
+      <div class="team-member">
+        <img src="/thomas-shepherd.jpg" alt="Thomas Shepherd" class="headshot">
+        <div class="member-info">
+          <h3 class="member-name">Thomas Shepherd</h3>
+          <p class="member-role">Lighting & Sound Design</p>
+          <p class="member-bio">Thomas Shepherd is a lighting and sound designer whose work creates atmospheric and immersive environments. His thoughtful design choices enhance the storytelling and heighten the audience's sensory experience.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Venues & Companies -->
+    <div class="venue-section">
+      <h3 class="venue-name">Old Fitz Theatre</h3>
+      <p class="venue-logo-placeholder">(Logo TBC)</p>
+    </div>
+
+    <div class="venue-section">
+      <h3 class="venue-name">Irregular Programming</h3>
+      <p class="venue-logo-placeholder">(Logo TBC)</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Special Thanks -->
+    <div class="thanks-section">
+      <h2 class="section-title" style="margin-top: 0;">Special Thanks</h2>
+      <div class="thanks-list">
+        <p class="thanks-name">Philip Quast</p>
+        <p class="thanks-name">Clara Voda</p>
+        <p class="thanks-name">Allison Bennett</p>
+        <p class="thanks-name">Violetta Brau Mugica</p>
+        <p class="thanks-name">David Ratcliffe</p>
+        <p class="thanks-name">Camille Gerrard</p>
+        <p class="thanks-name">Jasper Cruden</p>
+        <p class="thanks-name">Alice Annetts</p>
+        <p class="thanks-name">Chesterman Creative</p>
+        <p class="thanks-name">Teresa Li</p>
+        <p class="thanks-name">James Wily</p>
+        <p class="thanks-name">Emilia Higgs</p>
+        <p class="thanks-name">Samuel McGown</p>
+        <p class="thanks-name">Chloe Callow</p>
+        <p class="thanks-name">Holly Mazzola</p>
+        <p class="thanks-name">Sophie Douglas</p>
+        <p class="thanks-name">Victoria Xu</p>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
