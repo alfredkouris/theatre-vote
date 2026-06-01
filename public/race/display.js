@@ -20,15 +20,13 @@ const refs = {
   lobbyLayer: document.getElementById('lobby-layer'),
   raceLayer: document.getElementById('race-layer'),
   resultsScreen: document.getElementById('results-screen'),
-  resultsKicker: document.getElementById('results-kicker'),
   resultsTitle: document.getElementById('results-title'),
-  resultsSubtitle: document.getElementById('results-subtitle'),
-  resultsBoardHeading: document.getElementById('results-board-heading'),
   resultsGrid: document.getElementById('results-grid'),
   roundResults: document.getElementById('round-results'),
   podiumScreen: document.getElementById('podium-screen'),
   podium: document.getElementById('podium'),
   remainingGrid: document.getElementById('remaining-grid'),
+  remainingSection: document.getElementById('remaining-section'),
   finishLine: document.querySelector('.finish-line-area')
 };
 
@@ -383,8 +381,7 @@ function renderRoundResults(state, result) {
 
   refs.roundResults.hidden = false;
   refs.podiumScreen.hidden = true;
-  refs.resultsBoardHeading.textContent = 'ADVANCING CUPCAKES';
-  refs.resultsGrid.style.gridTemplateColumns = `repeat(${Math.min(8, Math.max(1, advancingPlayers.length))}, minmax(0, 1fr))`;
+  refs.resultsGrid.style.gridTemplateColumns = `repeat(${Math.min(6, Math.max(1, advancingPlayers.length))}, minmax(0, 1fr))`;
   refs.resultsGrid.innerHTML = cards || '<p class="results-empty">Waiting for the next lineup.</p>';
   syncDecorativeSprites(refs.resultsGrid, '.result-card-cake', 'card');
 }
@@ -423,14 +420,21 @@ function renderCompleteResults(state) {
     </article>
   `).join('');
 
-  refs.remainingGrid.innerHTML = standings.slice(3).map((player) => `
-    <article class="remaining-card">
-      <div class="remaining-cake cupcake-motion-shell" data-motion-seed="${player.id}">
-        <div class="cupcake-motion-subject">${generateCakeSVG(getCakeById(player.cakeId))}</div>
-      </div>
-      <span class="remaining-name">${player.name}</span>
-    </article>
-  `).join('');
+  const remainingPlayers = standings.slice(3);
+
+  if (remainingPlayers.length > 0) {
+    refs.remainingSection.hidden = false;
+    refs.remainingGrid.innerHTML = remainingPlayers.map((player) => `
+      <article class="remaining-card">
+        <div class="remaining-cake cupcake-motion-shell" data-motion-seed="${player.id}">
+          <div class="cupcake-motion-subject">${generateCakeSVG(getCakeById(player.cakeId))}</div>
+        </div>
+        <span class="remaining-name">${player.name}</span>
+      </article>
+    `).join('');
+  } else {
+    refs.remainingSection.hidden = true;
+  }
 
   syncDecorativeSprites(refs.podiumScreen, '.podium-cake, .remaining-cake', 'podium');
 }
@@ -449,19 +453,15 @@ function syncResults(state) {
 
   if (state.status === 'complete') {
     refs.resultsScreen.dataset.mode = 'complete';
-    refs.resultsKicker.textContent = 'RACE COMPLETE';
-    refs.resultsTitle.textContent = 'Cupcake Podium';
-    refs.resultsSubtitle.textContent = 'Top three up front. Everybody else below.';
+    refs.resultsTitle.textContent = 'Winners!';
     renderCompleteResults(state);
     return;
   }
 
   refs.resultsScreen.dataset.mode = 'round';
-  refs.resultsKicker.textContent = result ? `ROUND ${result.roundNumber} COMPLETE` : 'ROUND COMPLETE';
-  refs.resultsTitle.textContent = result ? `${result.winners.length} Cupcakes Advance` : 'Round Locked';
-  refs.resultsSubtitle.textContent = result && result.nextRound
-    ? `The next round is ready: ${result.winners.length} cupcakes move on to Round ${result.nextRound}.`
-    : 'Waiting for the next start.';
+  refs.resultsTitle.textContent = result && result.nextRound
+    ? `Round ${result.roundNumber} Complete`
+    : 'Round Complete';
   renderRoundResults(state, result);
 }
 
@@ -704,7 +704,6 @@ function renderQRCode(elementId, size) {
 function initQRCode() {
   renderQRCode('qrcode', 600);
   renderQRCode('hud-qrcode', 88);
-  renderQRCode('results-qrcode', 600);
 }
 
 window.addEventListener('load', () => {

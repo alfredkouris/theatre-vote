@@ -53,26 +53,19 @@
       <div class="race-layer" id="race-layer" aria-hidden="true"></div>
 
       <div class="results-screen" id="results-screen" hidden>
-        <div class="results-top">
-          <h2 class="results-title" id="results-title">Round locked</h2>
+        <h2 class="results-title" id="results-title">Round locked</h2>
+
+        <div class="results-simple" id="round-results">
+          <div class="results-grid" id="results-grid"></div>
         </div>
 
-        <div class="results-content">
-          <div class="results-simple" id="round-results">
-            <div class="results-grid" id="results-grid"></div>
+        <div class="podium-screen" id="podium-screen" hidden>
+          <div class="podium-container">
+            <div class="podium" id="podium"></div>
           </div>
-
-          <div class="podium-screen" id="podium-screen" hidden>
-            <div class="podium-container">
-              <div class="podium" id="podium"></div>
-            </div>
-            <div class="remaining-section">
-              <div class="remaining-grid" id="remaining-grid"></div>
-            </div>
-          </div>
-
-          <div class="results-qr">
-            <div id="results-qrcode"></div>
+          <div class="remaining-section" id="remaining-section">
+            <h3 class="remaining-heading">Everyone Else</h3>
+            <div class="remaining-grid" id="remaining-grid"></div>
           </div>
         </div>
       </div>
