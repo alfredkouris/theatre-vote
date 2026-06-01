@@ -12,40 +12,45 @@
     <h1 class="survey-title">Who is the better chef?</h1>
 
     <div class="survey-content">
-      <div class="column-graph">
-        <div class="bars-container">
-          <div class="bar-column">
-            <div class="column-bar-fill column-bar-julia" id="julia-bar">
-              <div class="column-count" id="julia-count">0</div>
-            </div>
+      <!-- Left: Photos and Names -->
+      <div class="chefs-section">
+        <div class="chef-item">
+          <div class="display-image-wrapper">
+            <img src="/julia-child.jpg" alt="Julia Child" class="display-chef-image">
           </div>
-          <div class="bar-column">
-            <div class="column-bar-fill column-bar-betty" id="betty-bar">
-              <div class="column-count" id="betty-count">0</div>
-            </div>
-          </div>
+          <div class="chef-name">Julia Child</div>
         </div>
-        <div class="labels-container">
-          <div class="column-label">Julia Child</div>
-          <div class="column-label">Betty Crocker</div>
+        <div class="chef-item">
+          <div class="display-image-wrapper">
+            <img src="/betty%20crocker.jpg" alt="Betty Crocker" class="display-chef-image">
+          </div>
+          <div class="chef-name">Betty Crocker</div>
         </div>
       </div>
 
+      <!-- Center: Horizontal Bars -->
+      <div class="horizontal-bars">
+        <div class="bar-row">
+          <div class="bar-track">
+            <div class="bar-fill bar-julia" id="julia-bar"></div>
+          </div>
+          <div class="bar-count" id="julia-count">0</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-track">
+            <div class="bar-fill bar-betty" id="betty-bar"></div>
+          </div>
+          <div class="bar-count" id="betty-count">0</div>
+        </div>
+      </div>
+
+      <!-- Right: QR Code -->
       <div class="qr-container">
         <div id="qrcode"></div>
       </div>
     </div>
 
-    <div class="images-row">
-      <div class="display-image-wrapper">
-        <img src="/julia-child.jpg" alt="Julia Child" class="display-chef-image">
-      </div>
-      <div class="display-image-wrapper">
-        <img src="/betty%20crocker.jpg" alt="Betty Crocker" class="display-chef-image">
-      </div>
-    </div>
-
-    <div id="alfred-message" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #f8f6f1; color: #000; padding: 24px; text-align: center; font-size: 28px; font-weight: bold; font-family: 'Lato', sans-serif; border-top: 4px solid #000; box-shadow: 0 -4px 16px rgba(0,0,0,0.2); animation: flash 1s infinite;">
+    <div id="alfred-message" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #f8f6f1; color: #000; padding: 60px; text-align: center; font-size: 112px; font-weight: bold; font-family: 'Lato', sans-serif; border-top: 16px solid #000; box-shadow: 0 -4px 16px rgba(0,0,0,0.2); animation: flash 1s infinite;">
       Having problems? Call Alfred on +61 433 941 370
     </div>
   </div>
@@ -69,8 +74,8 @@
 
       new QRCode(qrContainer, {
         text: surveyUrl,
-        width: 200,
-        height: 200,
+        width: 600,
+        height: 600,
         colorDark: '#111111',
         colorLight: '#ffffff'
       });
@@ -91,8 +96,8 @@
       const juliaBar = document.getElementById('julia-bar');
       const bettyBar = document.getElementById('betty-bar');
 
-      juliaBar.style.height = `${juliaPercent}%`;
-      bettyBar.style.height = `${bettyPercent}%`;
+      juliaBar.style.width = `${juliaPercent}%`;
+      bettyBar.style.width = `${bettyPercent}%`;
 
       if (hasChanged) {
         juliaBar.classList.add('animate');
