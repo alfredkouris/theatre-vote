@@ -702,8 +702,9 @@ function renderQRCode(elementId, size) {
 }
 
 function initQRCode() {
-  renderQRCode('qrcode', 220);
+  renderQRCode('qrcode', 600);
   renderQRCode('hud-qrcode', 88);
+  renderQRCode('results-qrcode', 600);
 }
 
 window.addEventListener('load', () => {
