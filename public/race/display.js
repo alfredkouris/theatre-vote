@@ -5,8 +5,9 @@ const DISPLAY_POLL_MS = {
   complete: 600
 };
 
-const ROUND_DURATION_SECONDS = 30;
+const ROUND_DURATION_SECONDS = 15;
 const DISPLAY_TRACK_LENGTH = 14000;
+const VERTICAL_RACING_THRESHOLD = 20;
 
 const refs = {
   roundNum: document.getElementById('round-num'),
@@ -241,7 +242,14 @@ function getRaceColumnCount(count) {
   if (count <= 36) {
     return 4;
   }
-  return 5;
+  if (count <= 50) {
+    return 5;
+  }
+  return 6;
+}
+
+function isVerticalRacing(count) {
+  return count > VERTICAL_RACING_THRESHOLD;
 }
 
 function syncRace(state) {
@@ -272,6 +280,8 @@ function syncRace(state) {
     }
   });
 
+  const useVertical = isVerticalRacing(participants.length);
+  refs.raceLayer.classList.toggle('vertical-racing', useVertical);
   refs.raceLayer.style.gridTemplateColumns = `repeat(${getRaceColumnCount(participants.length)}, minmax(0, 1fr))`;
 
   const rankingMap = buildRankingMap(
@@ -597,21 +607,31 @@ function animateRace(now, dt) {
     }
   });
 
+  const isVertical = refs.raceLayer.classList.contains('vertical-racing');
+
   runtime.raceOrder.forEach((playerId, index) => {
     const sprite = runtime.raceSprites.get(playerId);
     if (!sprite) {
       return;
     }
 
-    const runwayWidth = Math.max(0, sprite.runway.clientWidth - sprite.racer.clientWidth - 10);
     const progress = Math.min(0.985, sprite.localPosition / DISPLAY_TRACK_LENGTH);
-    const x = runwayWidth * progress;
     const motion = CupcakeMotion.computeTransform(sprite.motion, now, {
       velocity: sprite.serverVelocity,
       intensity: 0.8 + Math.min(0.45, sprite.serverVelocity / 380)
     });
 
-    sprite.racer.style.transform = `translate3d(${x + motion.x}px, ${motion.y}px, 0) rotate(${motion.rotate}deg) scale(${motion.scaleX}, ${motion.scaleY})`;
+    if (isVertical) {
+      // Vertical racing: bottom to top
+      const runwayHeight = Math.max(0, sprite.runway.clientHeight - sprite.racer.clientHeight - 10);
+      const y = -runwayHeight * progress; // Negative because we go upward
+      sprite.racer.style.transform = `translate3d(${motion.x}px, ${y + motion.y}px, 0) rotate(${motion.rotate}deg) scale(${motion.scaleX}, ${motion.scaleY})`;
+    } else {
+      // Horizontal racing: left to right
+      const runwayWidth = Math.max(0, sprite.runway.clientWidth - sprite.racer.clientWidth - 10);
+      const x = runwayWidth * progress;
+      sprite.racer.style.transform = `translate3d(${x + motion.x}px, ${motion.y}px, 0) rotate(${motion.rotate}deg) scale(${motion.scaleX}, ${motion.scaleY})`;
+    }
   });
 }
 

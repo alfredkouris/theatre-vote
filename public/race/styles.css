@@ -1173,6 +1173,92 @@ body {
   50% { transform: scale(1.15); }
 }
 
+/* Vertical Racing Mode (>20 cakes) */
+.race-layer.vertical-racing {
+  inset: 18px 18px 18px 18px;
+  grid-template-columns: repeat(var(--race-columns, 5), minmax(0, 1fr));
+  gap: 10px 8px;
+}
+
+.vertical-racing .race-lane {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 60px minmax(0, 1fr);
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 8px 6px;
+}
+
+.vertical-racing .lane-meta {
+  text-align: center;
+  align-items: center;
+}
+
+.vertical-racing .lane-position {
+  font-size: 24px;
+  text-align: center;
+}
+
+.vertical-racing .lane-name {
+  font-size: 9px;
+  text-align: center;
+}
+
+.vertical-racing .lane-runway {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+}
+
+.vertical-racing .lane-bg {
+  border-bottom: none;
+  border-left: 2px dotted rgba(255, 255, 255, 0.15);
+}
+
+.vertical-racing .race-lane:hover .lane-bg {
+  border-left-color: rgba(255, 255, 255, 0.25);
+}
+
+.vertical-racing .race-lane.leading .lane-bg {
+  border-left: 2px dotted rgba(255, 215, 0, 0.5);
+}
+
+.vertical-racing .racer {
+  top: auto;
+  bottom: 0;
+  left: 50%;
+  margin-top: 0;
+  margin-left: -17px;
+}
+
+.vertical-racing ~ .finish-line-area {
+  right: auto;
+  left: 0;
+  top: 0;
+  bottom: auto;
+  width: 100%;
+  height: 60px;
+  flex-direction: row;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.08) 0 18px,
+      rgba(255, 255, 255, 0.02) 18px 36px
+    );
+  border-left: none;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.18);
+}
+
+.vertical-racing ~ .finish-line-area .finish-text {
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+}
+
+.vertical-racing ~ .finish-line-area .finish-flag {
+  transform: rotate(90deg);
+}
+
 .racer {
   position: absolute;
   left: 0;

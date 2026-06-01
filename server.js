@@ -705,10 +705,11 @@ const CAKE_NAMES = [
   "Ice Cream Sundae", "S'mores Surprise", "Birthday Blast", "Neapolitan", "Wedding White"
 ];
 
-const MAX_BRACKET_SIZE = 16;
+const MAX_BRACKET_SIZE = 64;
 const MAX_CAKES = CAKE_NAMES.length;
+const MAX_ROUNDS = 3;
 
-const ROUND_DURATION_SECONDS = 30;
+const ROUND_DURATION_SECONDS = 15;
 const ROUND_DURATION_MS = ROUND_DURATION_SECONDS * 1000;
 
 // Physics constants
@@ -819,16 +820,31 @@ function buildRoundTargets(participantCount) {
     return [1];
   }
 
-  let nextCut = 1;
+  // Calculate targets for exactly MAX_ROUNDS rounds
+  const targets = [];
+  let currentSize = participantCount;
 
-  while (nextCut * 2 < participantCount && nextCut * 2 <= MAX_BRACKET_SIZE) {
-    nextCut *= 2;
+  for (let round = 1; round <= MAX_ROUNDS; round++) {
+    if (currentSize <= 1) {
+      break;
+    }
+
+    // Calculate how many should advance
+    const remainingRounds = MAX_ROUNDS - round;
+    if (remainingRounds === 0) {
+      targets.push(1);
+      break;
+    }
+
+    // For the remaining rounds, calculate the target
+    const nextSize = Math.max(1, Math.ceil(currentSize / Math.pow(2, remainingRounds + 1)));
+    targets.push(nextSize);
+    currentSize = nextSize;
   }
 
-  const targets = [];
-
-  for (let size = nextCut; size >= 1; size /= 2) {
-    targets.push(size);
+  // Ensure we always end with 1
+  if (targets[targets.length - 1] !== 1) {
+    targets.push(1);
   }
 
   return targets;
