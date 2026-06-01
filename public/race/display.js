@@ -314,8 +314,8 @@ function syncRace(state) {
 function createResultCard(player) {
   return `
     <article class="result-card" data-player-id="${player.id}">
-      <div class="result-card-cake cupcake-motion-shell" data-motion-seed="${player.id}">
-        <div class="cupcake-motion-subject">${generateCakeSVG(getCakeById(player.cakeId))}</div>
+      <div class="result-card-cake">
+        ${generateCakeSVG(getCakeById(player.cakeId))}
       </div>
       <span class="result-card-name">${player.name}</span>
     </article>
@@ -383,7 +383,6 @@ function renderRoundResults(state, result) {
   refs.podiumScreen.hidden = true;
   refs.resultsGrid.style.gridTemplateColumns = `repeat(${Math.min(6, Math.max(1, advancingPlayers.length))}, minmax(0, 1fr))`;
   refs.resultsGrid.innerHTML = cards || '<p class="results-empty">Waiting for the next lineup.</p>';
-  syncDecorativeSprites(refs.resultsGrid, '.result-card-cake', 'card');
 }
 
 function renderCompleteResults(state) {
@@ -412,8 +411,8 @@ function renderCompleteResults(state) {
 
   refs.podium.innerHTML = podiumEntries.map((entry) => `
     <article class="podium-slot podium-slot-${entry.step}">
-      <div class="podium-cake cupcake-motion-shell" data-motion-seed="${entry.player.id}">
-        <div class="cupcake-motion-subject">${generateCakeSVG(getCakeById(entry.player.cakeId))}</div>
+      <div class="podium-cake">
+        ${generateCakeSVG(getCakeById(entry.player.cakeId))}
       </div>
       <div class="podium-step">${entry.label}</div>
       <div class="podium-name">${entry.player.name}</div>
@@ -426,8 +425,8 @@ function renderCompleteResults(state) {
     refs.remainingSection.hidden = false;
     refs.remainingGrid.innerHTML = remainingPlayers.map((player) => `
       <article class="remaining-card">
-        <div class="remaining-cake cupcake-motion-shell" data-motion-seed="${player.id}">
-          <div class="cupcake-motion-subject">${generateCakeSVG(getCakeById(player.cakeId))}</div>
+        <div class="remaining-cake">
+          ${generateCakeSVG(getCakeById(player.cakeId))}
         </div>
         <span class="remaining-name">${player.name}</span>
       </article>
@@ -435,8 +434,6 @@ function renderCompleteResults(state) {
   } else {
     refs.remainingSection.hidden = true;
   }
-
-  syncDecorativeSprites(refs.podiumScreen, '.podium-cake, .remaining-cake', 'podium');
 }
 
 function syncResults(state) {
