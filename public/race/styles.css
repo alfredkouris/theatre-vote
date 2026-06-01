@@ -15,7 +15,7 @@
   inset: 22px 122px 22px 18px;
   display: grid;
   grid-template-columns: repeat(var(--race-columns, 3), minmax(0, 1fr));
-  align-content: start;
+  align-content: space-between;
   gap: 8px 10px;
   overflow: hidden;
 }
@@ -57,6 +57,7 @@
 }
 
 .lane-runway {
+  position: relative;
   height: 34px;
   border-radius: 999px;
   overflow: hidden;
@@ -186,8 +187,6 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 30px;
   align-content: start;
-  overflow: auto;
-  padding-right: 10px;
   width: 100%;
 }
 
@@ -196,6 +195,13 @@
   justify-content: center;
   align-content: center;
   gap: 40px;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.remaining-grid {
+  overflow: auto;
+  padding-right: 10px;
 }
 
 .result-card,
@@ -831,10 +837,11 @@ body {
 
 .race-layer {
   inset: 30px 140px 30px 18px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
+  display: grid;
+  grid-template-columns: repeat(var(--race-columns, 3), minmax(0, 1fr));
+  align-content: space-between;
   gap: 12px;
+  overflow: hidden;
 }
 
 .results-screen {
@@ -1175,71 +1182,104 @@ body {
 
 /* Vertical Racing Mode (>20 cakes) */
 .race-layer.vertical-racing {
-  inset: 18px 18px 18px 18px;
-  grid-template-columns: repeat(var(--race-columns, 5), minmax(0, 1fr));
-  gap: 10px 8px;
+  display: grid;
+  inset: 20px 4px 4px 4px;
+  grid-template-columns: repeat(var(--race-columns, 30), minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  align-content: stretch;
+  justify-content: stretch;
+  gap: 1px;
 }
 
 .vertical-racing .race-lane {
-  height: 100%;
+  height: auto;
   min-height: 0;
-  display: grid;
-  grid-template-rows: 60px minmax(0, 1fr);
-  grid-template-columns: 1fr;
-  gap: 8px;
-  padding: 8px 6px;
+  display: block;
+  position: relative;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.vertical-racing .race-lane.leading {
+  background: transparent;
+  border: 0;
 }
 
 .vertical-racing .lane-meta {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  right: 0;
+  z-index: 8;
   text-align: center;
   align-items: center;
+  justify-content: center;
+  gap: 0;
 }
 
 .vertical-racing .lane-position {
-  font-size: 24px;
+  font-size: 10px;
+  line-height: 1;
   text-align: center;
+  text-shadow: none;
 }
 
 .vertical-racing .lane-name {
-  font-size: 9px;
-  text-align: center;
+  display: none;
 }
 
 .vertical-racing .lane-runway {
   width: 100%;
   height: 100%;
+  min-height: 36px;
   min-width: 0;
+  justify-self: center;
+  border-radius: 999px;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(0deg, rgba(17, 17, 17, 0.07) 0 24px, rgba(255, 255, 255, 0.28) 24px 48px),
+    rgba(255, 255, 255, 0.65);
 }
 
 .vertical-racing .lane-bg {
-  border-bottom: none;
-  border-left: 2px dotted rgba(255, 255, 255, 0.15);
+  border: 0;
 }
 
 .vertical-racing .race-lane:hover .lane-bg {
-  border-left-color: rgba(255, 255, 255, 0.25);
+  border: 0;
 }
 
 .vertical-racing .race-lane.leading .lane-bg {
-  border-left: 2px dotted rgba(255, 215, 0, 0.5);
+  border: 0;
 }
 
 .vertical-racing .racer {
   top: auto;
-  bottom: 0;
+  bottom: 3px;
   left: 50%;
   margin-top: 0;
-  margin-left: -17px;
+  margin-left: -13px;
+  width: 26px;
+  height: 26px;
 }
 
-.vertical-racing ~ .finish-line-area {
+.vertical-racing .racer svg {
+  width: 26px;
+  height: 26px;
+}
+
+.track-container.vertical-racing ~ .finish-line-area {
   right: auto;
   left: 0;
   top: 0;
   bottom: auto;
   width: 100%;
-  height: 60px;
+  height: 18px;
   flex-direction: row;
+  gap: 8px;
   background:
     repeating-linear-gradient(
       90deg,
@@ -1247,15 +1287,18 @@ body {
       rgba(255, 255, 255, 0.02) 18px 36px
     );
   border-left: none;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
 }
 
-.vertical-racing ~ .finish-line-area .finish-text {
+.track-container.vertical-racing ~ .finish-line-area .finish-text {
+  font-size: 10px;
+  letter-spacing: 3px;
   writing-mode: horizontal-tb;
   text-orientation: mixed;
 }
 
-.vertical-racing ~ .finish-line-area .finish-flag {
+.track-container.vertical-racing ~ .finish-line-area .finish-flag {
+  font-size: 13px;
   transform: rotate(90deg);
 }
 
@@ -1640,6 +1683,21 @@ body {
   inset: 0;
   background: radial-gradient(circle at center, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
   animation: breathe 4s ease-in-out infinite;
+}
+
+.race-position-badge {
+  position: relative;
+  z-index: 12;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid rgba(17, 17, 17, 0.88);
+  color: #111;
+  font-size: clamp(24px, 7vw, 42px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.16);
 }
 
 .tap-cake {
@@ -2586,6 +2644,58 @@ body {
   padding: 12px 32px;
 }
 
+.game-display[data-race-status="racing"] .game-hud {
+  padding: 4px 24px;
+}
+
+.game-display[data-race-status="racing"] .round-badge {
+  padding: 6px 16px;
+  border-radius: 12px;
+}
+
+.game-display[data-race-status="racing"] .round-label,
+.game-display[data-race-status="racing"] .timer-status {
+  font-size: 9px;
+}
+
+.game-display[data-race-status="racing"] .round-number {
+  font-size: 30px;
+}
+
+.game-display[data-race-status="racing"] .scoreboard-timer,
+.game-display[data-race-status="racing"] .scoreboard-timer.warning {
+  padding: 4px 22px;
+  border-width: 2px;
+  border-radius: 14px;
+}
+
+.game-display[data-race-status="racing"] .timer-container {
+  gap: 3px;
+}
+
+.game-display[data-race-status="racing"] .timer-value {
+  min-width: 122px;
+  font-size: 38px;
+}
+
+.game-display[data-race-status="racing"] .hud-right {
+  min-height: 0;
+}
+
+.game-display[data-race-status="racing"] .hud-qr {
+  display: none !important;
+}
+
+.game-display[data-race-status="results"] .game-hud,
+.game-display[data-race-status="complete"] .game-hud {
+  display: none;
+}
+
+.game-display[data-race-status="results"] .track-container,
+.game-display[data-race-status="complete"] .track-container {
+  padding: 0;
+}
+
 .game-hud::after {
   height: 4px;
   background: linear-gradient(90deg, transparent 0%, rgba(17, 17, 17, 0.18) 12%, rgba(17, 17, 17, 0.48) 50%, rgba(17, 17, 17, 0.18) 88%, transparent 100%);
@@ -2777,6 +2887,60 @@ body {
 
 .results-screen {
   background: transparent;
+}
+
+.results-screen[data-mode="round"] {
+  overflow: hidden;
+  inset: 18px;
+  gap: clamp(10px, 2vh, 24px);
+  padding: clamp(16px, 4vh, 36px) clamp(18px, 5vw, 54px);
+  justify-content: center;
+}
+
+.results-screen[data-mode="complete"] {
+  inset: 18px;
+}
+
+.results-screen[data-mode="round"] .results-title {
+  flex: 0 0 auto;
+  font-size: clamp(42px, 10vh, 92px);
+}
+
+.results-screen[data-mode="round"] .results-simple {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  gap: 0;
+  overflow: visible;
+  justify-content: center;
+}
+
+.results-screen[data-mode="round"] .results-grid {
+  overflow: visible;
+  padding-right: 0;
+  gap: clamp(10px, 2vw, 20px);
+  align-content: center;
+  align-items: stretch;
+  max-width: min(1200px, 100%);
+}
+
+.results-screen[data-mode="round"] .result-card {
+  height: 100%;
+  min-height: 0;
+  gap: clamp(6px, 1.4vh, 14px);
+  padding: clamp(8px, 2vh, 18px) clamp(8px, 1.5vw, 14px);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.results-screen[data-mode="round"] .result-card-cake {
+  width: clamp(48px, 15vh, 118px);
+  height: clamp(48px, 15vh, 118px);
+}
+
+.results-screen[data-mode="round"] .result-card-name {
+  font-size: clamp(14px, 3.4vh, 30px);
+  line-height: 1.05;
 }
 
 .remaining-heading {

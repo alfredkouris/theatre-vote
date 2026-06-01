@@ -18,6 +18,7 @@ const refs = {
   tapCake: document.getElementById('tap-cake'),
   tapPrompt: document.getElementById('tap-prompt'),
   tapInstructions: document.getElementById('tap-instructions'),
+  racePositionBadge: document.getElementById('race-position-badge'),
   loadingScreen: document.getElementById('loading-screen'),
   loadingText: document.querySelector('#loading-screen p'),
   eliminatedScreen: document.getElementById('eliminated-screen'),
@@ -96,6 +97,7 @@ function setScreen(screen) {
   refs.loadingScreen.style.display = screen === 'loading' ? 'flex' : 'none';
   refs.eliminatedScreen.style.display = screen === 'eliminated' ? 'flex' : 'none';
   refs.winnerScreen.style.display = screen === 'winner' ? 'flex' : 'none';
+  refs.racePositionBadge.hidden = screen !== 'tap' || refs.racePositionBadge.hidden;
   playerState.currentScreen = screen;
 }
 
@@ -193,6 +195,63 @@ function updateTapCopy() {
 
   refs.tapPrompt.textContent = 'READY';
   refs.tapInstructions.textContent = 'Wait for the round to start';
+}
+
+function getCurrentRoundRank(state, playerId) {
+  const round = state.rounds?.[state.currentRound];
+
+  if (!round || !Array.isArray(round.participants) || !round.participants.includes(playerId)) {
+    return null;
+  }
+
+  const rankings = round.participants
+    .map((participantId) => ({
+      playerId: participantId,
+      distance: round.positions?.[participantId] || 0,
+      taps: round.taps?.[participantId] || 0,
+      joinedAt: state.players?.[participantId]?.joinedAt || 0
+    }))
+    .sort((a, b) => {
+      if (b.distance !== a.distance) {
+        return b.distance - a.distance;
+      }
+
+      if (b.taps !== a.taps) {
+        return b.taps - a.taps;
+      }
+
+      return a.joinedAt - b.joinedAt;
+    });
+
+  const rank = rankings.findIndex((entry) => entry.playerId === playerId) + 1;
+
+  return rank > 0
+    ? { rank, total: rankings.length }
+    : null;
+}
+
+function updateRacePositionBadge(state, player) {
+  const isActiveRacer = Boolean(
+    state.status === 'racing' &&
+    player?.visible &&
+    !player?.eliminated &&
+    player.currentRound === state.currentRound
+  );
+
+  if (!isActiveRacer) {
+    refs.racePositionBadge.hidden = true;
+    return;
+  }
+
+  const ranking = getCurrentRoundRank(state, playerState.playerId);
+
+  if (!ranking) {
+    refs.racePositionBadge.hidden = true;
+    return;
+  }
+
+  refs.racePositionBadge.textContent = `#${ranking.rank} of #${ranking.total}`;
+  refs.racePositionBadge.hidden = false;
 }
 
 function setPreviewCopy(data) {
@@ -393,6 +452,7 @@ async function pollStatus() {
     playerState.visible = Boolean(player.visible);
     playerState.isEliminated = Boolean(player.eliminated);
     setPlayerName(player.name || playerState.cakeData?.name || 'Cupcake ready');
+    updateRacePositionBadge(state, player);
 
     if (playerState.isEliminated) {
       showEliminated();

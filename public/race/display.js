@@ -120,6 +120,12 @@ function clearRaceSprites() {
   });
   runtime.raceSprites.clear();
   runtime.raceOrder = [];
+  refs.raceLayer.classList.remove('vertical-racing');
+  refs.trackContainer.classList.remove('vertical-racing');
+  refs.raceLayer.style.removeProperty('--race-columns');
+  refs.raceLayer.style.removeProperty('--race-rows');
+  refs.raceLayer.style.removeProperty('grid-template-columns');
+  refs.raceLayer.style.removeProperty('grid-template-rows');
 }
 
 function createLobbySprite(player) {
@@ -233,19 +239,11 @@ function syncDecorativeSprites(container, selector, mode) {
 }
 
 function getRaceColumnCount(count) {
-  if (count <= 8) {
-    return 2;
-  }
-  if (count <= 18) {
-    return 3;
-  }
-  if (count <= 36) {
-    return 4;
-  }
-  if (count <= 50) {
-    return 5;
-  }
-  return 6;
+  return count <= VERTICAL_RACING_THRESHOLD ? 1 : count;
+}
+
+function getRaceRowCount(count, columnCount) {
+  return Math.max(1, Math.ceil(count / Math.max(1, columnCount)));
 }
 
 function isVerticalRacing(count) {
@@ -256,7 +254,7 @@ function syncRace(state) {
   const participants = getRaceParticipants(state);
 
   refs.trackContainer.classList.remove('free-roam');
-  refs.hudQr.hidden = false;
+  refs.hudQr.hidden = true;
   refs.lobbyHold.hidden = true;
   refs.finishLine.hidden = false;
   refs.lobbyLayer.hidden = true;
@@ -282,7 +280,20 @@ function syncRace(state) {
 
   const useVertical = isVerticalRacing(participants.length);
   refs.raceLayer.classList.toggle('vertical-racing', useVertical);
-  refs.raceLayer.style.gridTemplateColumns = `repeat(${getRaceColumnCount(participants.length)}, minmax(0, 1fr))`;
+  refs.trackContainer.classList.toggle('vertical-racing', useVertical);
+
+  const columnCount = useVertical ? participants.length : getRaceColumnCount(participants.length);
+  const rowCount = useVertical ? 1 : getRaceRowCount(participants.length, columnCount);
+  refs.raceLayer.style.setProperty('--race-columns', columnCount);
+  refs.raceLayer.style.setProperty('--race-rows', rowCount);
+
+  if (useVertical) {
+    refs.raceLayer.style.gridTemplateColumns = `repeat(${columnCount}, minmax(0, 1fr))`;
+    refs.raceLayer.style.gridTemplateRows = 'minmax(0, 1fr)';
+  } else {
+    refs.raceLayer.style.gridTemplateColumns = `repeat(${columnCount}, minmax(0, 1fr))`;
+    refs.raceLayer.style.removeProperty('grid-template-rows');
+  }
 
   const rankingMap = buildRankingMap(
     [...participants]
@@ -429,21 +440,15 @@ function renderCompleteResults(state) {
     </article>
   `).join('');
 
-  const remainingPlayers = standings.slice(3);
+  refs.remainingSection.hidden = true;
+  refs.remainingGrid.innerHTML = '';
+}
 
-  if (remainingPlayers.length > 0) {
-    refs.remainingSection.hidden = false;
-    refs.remainingGrid.innerHTML = remainingPlayers.map((player) => `
-      <article class="remaining-card">
-        <div class="remaining-cake">
-          ${generateCakeSVG(getCakeById(player.cakeId))}
-        </div>
-        <span class="remaining-name">${player.name}</span>
-      </article>
-    `).join('');
-  } else {
-    refs.remainingSection.hidden = true;
-  }
+function formatProgressTitle(result) {
+  const progressCount = result?.winners?.length || 0;
+  const cakeLabel = progressCount === 1 ? 'cake' : 'cakes';
+
+  return `${progressCount} ${cakeLabel} continue`;
 }
 
 function syncResults(state) {
@@ -467,13 +472,14 @@ function syncResults(state) {
 
   refs.resultsScreen.dataset.mode = 'round';
   refs.resultsTitle.textContent = result && result.nextRound
-    ? `Round ${result.roundNumber} Complete`
+    ? formatProgressTitle(result)
     : 'Round Complete';
   renderRoundResults(state, result);
 }
 
 function applyState(state) {
   runtime.state = state;
+  document.body.dataset.raceStatus = state.status;
   refs.roundNum.textContent = state.status === 'results'
     ? state.lastResult?.nextRound || state.currentRound || 1
     : state.currentRound || 1;
@@ -723,8 +729,114 @@ function initQRCode() {
   renderQRCode('hud-qrcode', 88);
 }
 
+// Debug Menu
+let debugClickCount = 0;
+let debugClickTimer = null;
+
+function showDebugMenu() {
+  const existingMenu = document.getElementById('debug-menu');
+  if (existingMenu) {
+    existingMenu.remove();
+    return;
+  }
+
+  const menu = document.createElement('div');
+  menu.id = 'debug-menu';
+  menu.innerHTML = `
+    <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(20, 20, 30, 0.98); padding: 40px; border-radius: 20px; z-index: 10000; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.2);">
+      <h3 style="margin: 0 0 20px 0; font-family: 'Quizlo', 'Lato', sans-serif; font-size: 28px; color: white; text-align: center;">Debug Menu</h3>
+      <div style="display: flex; flex-direction: column; gap: 15px;">
+        <label style="color: white; font-size: 16px; display: flex; flex-direction: column; gap: 8px;">
+          Number of Players:
+          <input type="number" id="debug-player-count" min="1" max="50" value="10" style="padding: 12px; font-size: 18px; border-radius: 8px; border: 2px solid #4facfe; background: rgba(255,255,255,0.95); width: 200px;">
+        </label>
+        <button id="debug-simulate-btn" style="padding: 14px 24px; font-size: 16px; font-weight: 700; border-radius: 10px; border: none; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">
+          Simulate Race
+        </button>
+        <button id="debug-close-btn" style="padding: 10px 20px; font-size: 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; cursor: pointer;">
+          Close
+        </button>
+        <div id="debug-status" style="color: #4facfe; font-size: 14px; text-align: center; min-height: 20px;"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(menu);
+
+  document.getElementById('debug-close-btn').addEventListener('click', () => {
+    menu.remove();
+  });
+
+  document.getElementById('debug-simulate-btn').addEventListener('click', async () => {
+    const count = parseInt(document.getElementById('debug-player-count').value);
+    const statusEl = document.getElementById('debug-status');
+    const btn = document.getElementById('debug-simulate-btn');
+
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    statusEl.textContent = 'Creating players...';
+
+    try {
+      for (let i = 0; i < count; i++) {
+        const deviceId = `debug-device-${Date.now()}-${i}`;
+
+        // Join
+        const joinRes = await fetch('/api/race/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceId })
+        });
+        const joinData = await joinRes.json();
+
+        if (!joinData.success) {
+          statusEl.textContent = `Failed at player ${i + 1}: ${joinData.error}`;
+          break;
+        }
+
+        // Activate
+        await fetch('/api/race/activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playerId: joinData.playerId })
+        });
+
+        statusEl.textContent = `Created ${i + 1} / ${count} players...`;
+      }
+
+      statusEl.textContent = `Successfully created ${count} players!`;
+      setTimeout(() => {
+        menu.remove();
+      }, 1500);
+    } catch (error) {
+      statusEl.textContent = `Error: ${error.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  });
+}
+
+function initDebugMode() {
+  refs.timer.addEventListener('click', () => {
+    debugClickCount++;
+
+    if (debugClickTimer) {
+      clearTimeout(debugClickTimer);
+    }
+
+    if (debugClickCount === 3) {
+      showDebugMenu();
+      debugClickCount = 0;
+    } else {
+      debugClickTimer = setTimeout(() => {
+        debugClickCount = 0;
+      }, 500);
+    }
+  });
+}
+
 window.addEventListener('load', () => {
   initQRCode();
+  initDebugMode();
   window.requestAnimationFrame(frame);
   pollState();
 });
