@@ -253,8 +253,8 @@ body.vote-body {
   box-shadow:
     inset 0 4px 8px rgba(255, 255, 255, 0.2),
     0 8px 16px rgba(0, 0, 0, 0.5);
-  color: #000000;
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .vote-button:hover {
@@ -272,11 +272,11 @@ body.vote-body {
 }
 
 .vote-button-julia {
-  background: linear-gradient(180deg, #F5E6D3 0%, #E8D5C4 100%);
+  background: linear-gradient(180deg, #1565c0 0%, #0d47a1 100%);
 }
 
 .vote-button-betty {
-  background: linear-gradient(180deg, #E0E0E0 0%, #C8C8C8 100%);
+  background: linear-gradient(180deg, #d32f2f 0%, #b71c1c 100%);
 }
 
 .vote-thank-you {
@@ -435,11 +435,11 @@ body.survey-body {
 }
 
 .bar-julia {
-  background: linear-gradient(90deg, #F5E6D3 0%, #E8D5C4 100%);
+  background: linear-gradient(90deg, #1565c0 0%, #0d47a1 100%);
 }
 
 .bar-betty {
-  background: linear-gradient(90deg, #E0E0E0 0%, #C8C8C8 100%);
+  background: linear-gradient(90deg, #d32f2f 0%, #b71c1c 100%);
 }
 
 .bar-count {
