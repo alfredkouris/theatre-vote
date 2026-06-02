@@ -812,8 +812,8 @@ body {
 .lobby-qr-badge #qrcode img,
 .lobby-qr-badge #qrcode canvas {
   display: block;
-  width: 600px !important;
-  height: 600px !important;
+  width: min(600px, 50vh) !important;
+  height: min(600px, 50vh) !important;
 }
 
 .lobby-qr-label {
@@ -2517,8 +2517,8 @@ body {
 
   .lobby-qr-badge #qrcode img,
   .lobby-qr-badge #qrcode canvas {
-    width: 400px !important;
-    height: 400px !important;
+    width: min(400px, 45vh) !important;
+    height: min(400px, 45vh) !important;
   }
 
   .podium {
