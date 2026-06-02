@@ -28,11 +28,14 @@ const refs = {
   podium: document.getElementById('podium'),
   remainingGrid: document.getElementById('remaining-grid'),
   remainingSection: document.getElementById('remaining-section'),
-  finishLine: document.querySelector('.finish-line-area')
+  finishLine: document.querySelector('.finish-line-area'),
+  countdownOverlay: document.getElementById('countdown-overlay'),
+  countdownNumber: document.getElementById('countdown-number')
 };
 
 const runtime = {
   state: null,
+  previousStatus: null,
   polling: false,
   pollTimer: null,
   lastFrame: performance.now(),
@@ -477,7 +480,36 @@ function syncResults(state) {
   renderRoundResults(state, result);
 }
 
+function showCountdown(callback) {
+  refs.countdownOverlay.hidden = false;
+  let count = 3;
+
+  function updateCountdown() {
+    refs.countdownNumber.textContent = count;
+    refs.countdownNumber.style.animation = 'none';
+    setTimeout(() => {
+      refs.countdownNumber.style.animation = 'countdownPulse 1s ease-out';
+    }, 10);
+
+    if (count > 1) {
+      count--;
+      setTimeout(updateCountdown, 1000);
+    } else {
+      setTimeout(() => {
+        refs.countdownOverlay.hidden = true;
+        if (callback) callback();
+      }, 1000);
+    }
+  }
+
+  updateCountdown();
+}
+
 function applyState(state) {
+  const wasRacing = runtime.previousStatus === 'racing';
+  const isNowRacing = state.status === 'racing';
+  const isNewRound = !wasRacing && isNowRacing;
+
   runtime.state = state;
   document.body.dataset.raceStatus = state.status;
   refs.roundNum.textContent = state.status === 'results'
@@ -488,6 +520,7 @@ function applyState(state) {
     clearRaceSprites();
     hideResults();
     syncLobby(state);
+    runtime.previousStatus = state.status;
     return;
   }
 
@@ -497,13 +530,23 @@ function applyState(state) {
 
   if (state.status === 'racing') {
     hideResults();
-    syncRace(state);
+
+    if (isNewRound) {
+      showCountdown(() => {
+        syncRace(state);
+      });
+    } else {
+      syncRace(state);
+    }
+
+    runtime.previousStatus = state.status;
     return;
   }
 
   if (state.status === 'results' || state.status === 'complete') {
     clearRaceSprites();
     syncResults(state);
+    runtime.previousStatus = state.status;
     return;
   }
 
@@ -514,6 +557,7 @@ function applyState(state) {
   refs.raceLayer.hidden = true;
   refs.resultsScreen.hidden = true;
   setPlaceholder('WAITING FOR PLAYERS...');
+  runtime.previousStatus = state.status;
 }
 
 function updateHud() {
