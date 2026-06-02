@@ -67,6 +67,7 @@
     let clickCount = 0;
     let clickTimer = null;
     let previousVotes = { julia: 0, betty: 0 };
+    let isFirstLoad = true;
 
     function renderQrCode() {
       const qrContainer = document.getElementById('qrcode');
@@ -96,10 +97,30 @@
       const juliaBar = document.getElementById('julia-bar');
       const bettyBar = document.getElementById('betty-bar');
 
-      juliaBar.style.width = `${juliaPercent}%`;
-      bettyBar.style.width = `${bettyPercent}%`;
+      // On first load, animate from 0 to current values
+      if (isFirstLoad) {
+        // Start at 0
+        juliaBar.style.width = '0%';
+        bettyBar.style.width = '0%';
 
-      if (hasChanged) {
+        // Force browser to apply 0% width
+        void juliaBar.offsetWidth;
+
+        // Then animate to target values
+        setTimeout(() => {
+          juliaBar.style.width = `${juliaPercent}%`;
+          bettyBar.style.width = `${bettyPercent}%`;
+        }, 50);
+
+        isFirstLoad = false;
+        previousVotes = { julia, betty };
+      } else {
+        // Normal updates - just set the width, CSS transition will handle animation
+        juliaBar.style.width = `${juliaPercent}%`;
+        bettyBar.style.width = `${bettyPercent}%`;
+      }
+
+      if (hasChanged && !isFirstLoad) {
         juliaBar.classList.add('animate');
         bettyBar.classList.add('animate');
 
