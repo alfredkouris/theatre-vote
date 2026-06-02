@@ -18,7 +18,9 @@ const refs = {
   tapCake: document.getElementById('tap-cake'),
   tapPrompt: document.getElementById('tap-prompt'),
   tapInstructions: document.getElementById('tap-instructions'),
+  racePositionContainer: document.getElementById('race-position-container'),
   racePositionBadge: document.getElementById('race-position-badge'),
+  raceLaneBadge: document.getElementById('race-lane-badge'),
   loadingScreen: document.getElementById('loading-screen'),
   loadingText: document.querySelector('#loading-screen p'),
   eliminatedScreen: document.getElementById('eliminated-screen'),
@@ -97,7 +99,7 @@ function setScreen(screen) {
   refs.loadingScreen.style.display = screen === 'loading' ? 'flex' : 'none';
   refs.eliminatedScreen.style.display = screen === 'eliminated' ? 'flex' : 'none';
   refs.winnerScreen.style.display = screen === 'winner' ? 'flex' : 'none';
-  refs.racePositionBadge.hidden = screen !== 'tap' || refs.racePositionBadge.hidden;
+  refs.racePositionContainer.hidden = screen !== 'tap' || refs.racePositionContainer.hidden;
   playerState.currentScreen = screen;
 }
 
@@ -239,19 +241,22 @@ function updateRacePositionBadge(state, player) {
   );
 
   if (!isActiveRacer) {
-    refs.racePositionBadge.hidden = true;
+    refs.racePositionContainer.hidden = true;
     return;
   }
 
   const ranking = getCurrentRoundRank(state, playerState.playerId);
 
   if (!ranking) {
-    refs.racePositionBadge.hidden = true;
+    refs.racePositionContainer.hidden = true;
     return;
   }
 
+  const laneNumber = (player?.laneIndex ?? 0) + 1;
+
   refs.racePositionBadge.textContent = `#${ranking.rank} of #${ranking.total}`;
-  refs.racePositionBadge.hidden = false;
+  refs.raceLaneBadge.textContent = `LANE ${laneNumber}`;
+  refs.racePositionContainer.hidden = false;
 }
 
 function setPreviewCopy(data) {
