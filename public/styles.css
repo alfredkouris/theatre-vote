@@ -62,8 +62,13 @@ body:not(.vote-body):not(.survey-body) {
     4px 4px 0 rgba(0, 0, 0, 0.2);
 }
 
-#qrcode img {
+#qrcode img,
+#qrcode canvas {
   display: block;
+  max-width: min(600px, 50vh);
+  max-height: min(600px, 50vh);
+  width: auto !important;
+  height: auto !important;
 }
 
 .vote-url {
@@ -475,8 +480,13 @@ body.survey-body {
   transform: scale(0.98);
 }
 
-#qrcode img {
+#qrcode img,
+#qrcode canvas {
   display: block;
+  max-width: min(600px, 40vh);
+  max-height: min(600px, 40vh);
+  width: auto !important;
+  height: auto !important;
 }
 
 /* Mobile responsiveness */
