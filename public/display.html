@@ -85,9 +85,12 @@
     function updateDisplay(votes) {
       const julia = Number(votes.julia) || 0;
       const betty = Number(votes.betty) || 0;
-      const total = julia + betty;
-      const juliaPercent = total === 0 ? 0 : Math.round((julia / total) * 100);
-      const bettyPercent = total === 0 ? 0 : 100 - juliaPercent;
+
+      // Calculate width based on the maximum of the two vote counts
+      // This makes bars grow proportionally to votes, not percentages
+      const maxVotes = Math.max(julia, betty, 1); // At least 1 to avoid division by zero
+      const juliaPercent = (julia / maxVotes) * 100;
+      const bettyPercent = (betty / maxVotes) * 100;
 
       const hasChanged = julia !== previousVotes.julia || betty !== previousVotes.betty;
 
