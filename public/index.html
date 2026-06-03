@@ -176,10 +176,6 @@
       text-align: center;
     }
 
-    .menu-item:last-child:nth-child(odd) {
-      grid-column: 1 / -1;
-    }
-
     .item-name {
       font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
       font-size: 17px;
@@ -204,6 +200,60 @@
       color: #4a423a;
       max-width: 450px;
       margin: 0 auto;
+    }
+
+    .item-bio {
+      margin-top: 15px;
+    }
+
+    .bio-text {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 12px;
+      line-height: 1.7;
+      color: #4a423a;
+      text-align: left;
+      max-width: 450px;
+      margin: 0 auto;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 4;
+      overflow: hidden;
+      max-height: calc(1.7em * 4);
+      transition: max-height 0.4s ease-in-out;
+      text-overflow: ellipsis;
+      word-break: break-word;
+    }
+
+    .bio-text.expanded {
+      display: block;
+      -webkit-line-clamp: unset;
+      max-height: 2000px;
+    }
+
+    .bio-text p {
+      margin-bottom: 12px;
+    }
+
+    .bio-text p:last-child {
+      margin-bottom: 0;
+    }
+
+    .read-more-btn {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 11px;
+      font-style: italic;
+      color: #6a5d4d;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 8px;
+      padding: 0;
+      transition: color 0.2s ease;
+    }
+
+    .read-more-btn:hover {
+      color: #2c2416;
     }
 
     .headshot {
@@ -325,6 +375,14 @@
       .creative-team-subtitle {
         font-size: 17px;
       }
+
+      .bio-text {
+        font-size: 13px;
+      }
+
+      .read-more-btn {
+        font-size: 12px;
+      }
     }
 
     /* Desktop */
@@ -398,30 +456,67 @@
         <img src="/alfred-kouris.jpg" alt="Alfred Kouris" class="headshot">
         <div class="item-name">Alfred Kouris</div>
         <div class="item-role">Producer, Creator, Performer<br>Sound & Video Designer</div>
+        <div class="item-bio">
+          <div class="bio-text">
+            <p>Alfred trained with a double degree in Finance and Arts at Monash University in Australia, and then in Fine Arts (Acting) at NIDA. He is a multi-disciplined creative working as an actor, director, product designer and developer across theatre, large scale live performances and whatever else he conjures up.</p>
+            <p>Most recently, he was the Creative Director's Assistant on the Milano Cortina 2026 Winter Olympics Opening Ceremony. Following this, Alfred will head to Glasgow where he will work as the Director's Associate on the Commonwealth Games Opening Ceremony.</p>
+            <p>Alongside his performance and directing work, Alfred built Linus, an app used by over 4,000 actors in over 46 countries to help actors around the world learn their lines faster.</p>
+          </div>
+          <button class="read-more-btn" onclick="toggleBio(this)">Read more</button>
+        </div>
       </div>
 
       <div class="menu-item">
         <img src="/harry-stacey.jpg" alt="Harry Stacey" class="headshot">
         <div class="item-name">Harry Stacey</div>
         <div class="item-role">Producer, Creator, Performer</div>
+        <div class="item-bio">
+          <div class="bio-text">
+            <p>Harry graduated with a Diploma of Acting from the Western Australian Academy of Performing Arts (WAAPA) in 2019 and a Bachelor of Fine Arts in Acting from the National Institute of Dramatic Art (NIDA) in 2022. Since graduating, he has appeared in <i>Great White</i> by Will O'Mahony (directed by Jessica Bell) at Flow Studios, <i>All Boys</i> by Xavier Hazard (directed by Mehhma Malhi) at KXT, and <i>Amber</i> by Nikita Waldron (directed by Mehhma Malhi) at the Old Fitz.</p>
+            <p>In addition to his theatre work, Harry has become an active member of the Sydney improv community, performing at Improv Theatre Sydney and in shows such as <i>Scared Scriptless</i> and <i>Improv Comedy Cagefight</i>, where his team came runners up in the Grand Final at the Sydney Comedy Festival.</p>
+          </div>
+          <button class="read-more-btn" onclick="toggleBio(this)">Read more</button>
+        </div>
       </div>
 
       <div class="menu-item">
         <img src="/jasmine-power.jpg" alt="Jasmine Power" class="headshot">
         <div class="item-name">Jasmine Power</div>
         <div class="item-role">Stage Manager</div>
+        <div class="item-bio">
+          <div class="bio-text">
+            <p>Jasmine is an emerging stage and event manager working on Gadigal land. A recent graduate of NIDA, she completed the Bachelor of Fine Arts: Technical Theatre and Stage Management.</p>
+            <p>Recent credits include Assistant Stage Manager on <i>Drive Your Plow Over the Bones of the Dead</i> (Belvoir St Theatre), Stage Manager on <i>Sonder</i> (Old Fitz), Assistant Event Coordinator for <i>WAKE</i> (Sydney Festival in partnership with THISISPOPBABY), and Stage Manager on <i>Port</i> (KXT).</p>
+          </div>
+          <button class="read-more-btn" onclick="toggleBio(this)">Read more</button>
+        </div>
       </div>
 
       <div class="menu-item">
         <img src="/thomas-shepherd.jpg" alt="Thomas Shepherd" class="headshot">
         <div class="item-name">Thomas Shepherd</div>
         <div class="item-role">Lighting Designer</div>
+        <div class="item-bio">
+          <div class="bio-text">
+            <p>Thomas Shepherd (Shep, He/Him) is a dedicated and technically skilled theatre practitioner.</p>
+            <p>Passionate about lighting, sound, stage mechanics and curious to explore theatrical rigging, he excels in practical problem-solving and thrives when working in a team. Shep particularly enjoyed working as Head Electrician on NIDA productions including <i>A Very Expensive Poison</i> and <i>Alice, Mother of Cinema</i>, and completed a secondment on <i>MJ The Musical</i> with renowned Production Electrician Dale Mounsey.</p>
+          </div>
+          <button class="read-more-btn" onclick="toggleBio(this)">Read more</button>
+        </div>
       </div>
 
       <div class="menu-item">
         <img src="/talia-benater.jpg" alt="Talia Benater" class="headshot">
         <div class="item-name">Talia Benater</div>
         <div class="item-role">Producer</div>
+        <div class="item-bio">
+          <div class="bio-text">
+            <p>Talia Benatar is a Sydney-based actor, director, and producer. She recently directed <i>Watch Me Sleep</i> in New York as part of the NYC Frigid Festival. She is the co-founder of Irregular Programming, with whom she produced and assistant directed a sold-out season of <i>'Tis Pity She's a Whore</i>.</p>
+            <p>As an assistant director, Talia has collaborated with Anthony Skuse on <i>Gundog</i>, <i>Hedda Gabler</i>, <i>Breaking the Code</i>, and <i>Ladybird Ladybird</i>, and <i>IRL</i> with Eugene Lynch.</p>
+            <p>Her producing credits include Asst. Producing <i>The Cherry Orchard</i> (Old Fitz Theatre), <i>Till the Stars Come Down</i>, and <i>Hedda Gabler</i> for Secret House. As an actor, her recent credits include Masha in <i>The Seagull</i> (KXT), Dottie in <i>The Cherry Orchard</i> (Old Fitz Theatre), and Brooke in <i>Motel</i> (Sydney Fringe).</p>
+          </div>
+          <button class="read-more-btn" onclick="toggleBio(this)">Read more</button>
+        </div>
       </div>
     </div>
 
@@ -468,5 +563,20 @@
       <div>NIDA</div>
     </div>
   </div>
+
+  <script>
+    function toggleBio(button) {
+      const bioText = button.previousElementSibling;
+      const isExpanded = bioText.classList.contains('expanded');
+
+      if (isExpanded) {
+        bioText.classList.remove('expanded');
+        button.textContent = 'Read more';
+      } else {
+        bioText.classList.add('expanded');
+        button.textContent = 'Read less';
+      }
+    }
+  </script>
 </body>
 </html>
