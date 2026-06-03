@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nutritional Information - AKHSBAC</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      background: #f5f1e8;
+      color: #2c2416;
+      line-height: 1.6;
+      padding: 15px 15px 20px;
+      min-height: 100vh;
+    }
+
+    .menu {
+      max-width: 650px;
+      margin: 0 auto;
+      background: #fdfcf8;
+      padding: 20px 30px 40px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .corner-top-left,
+    .corner-bottom-right {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      opacity: 0.15;
+    }
+
+    .corner-top-left {
+      top: 0;
+      left: 0;
+      border-top: 1px solid #2c2416;
+      border-left: 1px solid #2c2416;
+    }
+
+    .corner-top-left::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 0 0, transparent 0%, transparent 48%, #2c2416 48%, #2c2416 49%, transparent 49%);
+      background-size: 10px 10px;
+    }
+
+    .corner-bottom-right {
+      bottom: 0;
+      right: 0;
+      border-bottom: 1px solid #2c2416;
+      border-right: 1px solid #2c2416;
+    }
+
+    .corner-bottom-right::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 100% 100%, transparent 0%, transparent 48%, #2c2416 48%, #2c2416 49%, transparent 49%);
+      background-size: 10px 10px;
+    }
+
+    .logo {
+      width: 100%;
+      max-width: 450px;
+      height: auto;
+      margin: 0 auto 20px;
+      display: block;
+    }
+
+    .section-title {
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      font-size: 18px;
+      font-weight: 400;
+      letter-spacing: 0.3em;
+      text-align: center;
+      text-transform: uppercase;
+      margin: 40px 0 25px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #d4c9b3;
+    }
+
+    .ornament {
+      text-align: center;
+      font-size: 14px;
+      color: #d4c9b3;
+      margin: 30px 0;
+      letter-spacing: 0.3em;
+    }
+
+    .allergen-box {
+      text-align: center;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 16px;
+      padding: 30px;
+      background: #f9f7f3;
+      border: 2px solid #d4c9b3;
+      margin: 20px 0;
+    }
+
+    .allergen-box strong {
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .review-section {
+      margin-top: 40px;
+    }
+
+    .review-prompt {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 18px;
+      text-align: center;
+      margin-bottom: 25px;
+      font-style: italic;
+    }
+
+    .star-rating {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 25px 0;
+      font-size: 40px;
+    }
+
+    .star {
+      cursor: pointer;
+      color: #d4c9b3;
+      transition: color 0.2s;
+    }
+
+    .star:hover,
+    .star.active {
+      color: #c9a961;
+    }
+
+    .form-group {
+      margin: 25px 0;
+    }
+
+    .form-group label {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 14px;
+      display: block;
+      margin-bottom: 8px;
+      text-align: center;
+      font-style: italic;
+      color: #6a5d4d;
+    }
+
+    .form-group textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 15px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 15px;
+      border: 2px solid #d4c9b3;
+      background: #fdfcf8;
+      color: #2c2416;
+      resize: vertical;
+    }
+
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #c9a961;
+    }
+
+    .submit-btn {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      margin: 30px auto;
+      padding: 15px 30px;
+      font-family: 'Bodoni 72', 'Bodoni MT', Georgia, serif;
+      font-size: 16px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      background: #2c2416;
+      color: #fdfcf8;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .submit-btn:hover {
+      background: #4a423a;
+    }
+
+    .submit-btn:disabled {
+      background: #8a7d6d;
+      cursor: not-allowed;
+    }
+
+    .message {
+      text-align: center;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 15px;
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 4px;
+    }
+
+    .message.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+
+    .message.error {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ef9a9a;
+    }
+
+    @media (min-width: 600px) {
+      body {
+        padding: 25px 20px 40px;
+      }
+
+      .menu {
+        padding: 30px 50px 60px;
+      }
+
+      .corner-top-left,
+      .corner-bottom-right {
+        width: 100px;
+        height: 100px;
+      }
+
+      .logo {
+        max-width: 500px;
+      }
+
+      .section-title {
+        font-size: 22px;
+      }
+
+      .allergen-box {
+        font-size: 18px;
+      }
+
+      .review-prompt {
+        font-size: 20px;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .menu {
+        padding: 40px 70px 80px;
+      }
+
+      .corner-top-left,
+      .corner-bottom-right {
+        width: 120px;
+        height: 120px;
+      }
+
+      .logo {
+        max-width: 550px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="menu">
+    <div class="corner-top-left"></div>
+    <div class="corner-bottom-right"></div>
+
+    <img src="/logo.png" alt="Alfred Kouris & Harry Stacey Bake a Cake" class="logo">
+
+    <h2 class="section-title">Nutritional Information</h2>
+
+    <div class="allergen-box">
+      <strong>CONTAINS:</strong>
+      WHEAT (GLUTEN), EGG, MILK
+    </div>
+
+    <div class="ornament">◈ ◈ ◈</div>
+
+    <div class="review-section">
+      <p class="review-prompt">Did you enjoy dining with us?</p>
+
+      <form id="reviewForm">
+        <div class="star-rating" id="starRating">
+          <span class="star" data-rating="1">★</span>
+          <span class="star" data-rating="2">★</span>
+          <span class="star" data-rating="3">★</span>
+          <span class="star" data-rating="4">★</span>
+          <span class="star" data-rating="5">★</span>
+        </div>
+
+        <div class="form-group">
+          <label for="reviewMessage">Share your thoughts about the show</label>
+          <textarea
+            id="reviewMessage"
+            name="message"
+            placeholder="Your message here..."
+          ></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Submit Review</button>
+      </form>
+
+      <div id="statusMessage" class="message" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    let selectedRating = 0;
+    const stars = document.querySelectorAll('.star');
+    const form = document.getElementById('reviewForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusMessage = document.getElementById('statusMessage');
+
+    // Star rating interaction
+    stars.forEach(star => {
+      star.addEventListener('click', () => {
+        selectedRating = parseInt(star.dataset.rating);
+        updateStars();
+      });
+
+      star.addEventListener('mouseenter', () => {
+        const rating = parseInt(star.dataset.rating);
+        stars.forEach((s, index) => {
+          if (index < rating) {
+            s.classList.add('active');
+          } else {
+            s.classList.remove('active');
+          }
+        });
+      });
+    });
+
+    document.querySelector('.star-rating').addEventListener('mouseleave', () => {
+      updateStars();
+    });
+
+    function updateStars() {
+      stars.forEach((star, index) => {
+        if (index < selectedRating) {
+          star.classList.add('active');
+        } else {
+          star.classList.remove('active');
+        }
+      });
+    }
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (selectedRating === 0) {
+        showMessage('Please select a star rating', 'error');
+        return;
+      }
+
+      const message = document.getElementById('reviewMessage').value.trim();
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        const response = await fetch('/api/nips/review', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            rating: selectedRating,
+            message: message
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showMessage('Thank you for your review!', 'success');
+          form.reset();
+          selectedRating = 0;
+          updateStars();
+        } else {
+          showMessage(data.error || 'Failed to submit review', 'error');
+        }
+      } catch (error) {
+        showMessage('Network error. Please try again.', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Review';
+      }
+    });
+
+    function showMessage(text, type) {
+      statusMessage.textContent = text;
+      statusMessage.className = `message ${type}`;
+      statusMessage.style.display = 'block';
+
+      setTimeout(() => {
+        statusMessage.style.display = 'none';
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

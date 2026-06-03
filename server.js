@@ -480,6 +480,9 @@ let votes = {
   betty: 0
 };
 
+// In-memory review storage
+let reviews = [];
+
 // Survey admin state
 let surveyAlfredVisible = false;
 
@@ -531,6 +534,70 @@ app.post('/api/survey/admin/toggle-alfred', (req, res) => {
 
 app.get('/api/survey/alfred-status', (req, res) => {
   res.json({ visible: surveyAlfredVisible });
+});
+
+// ===== REVIEWS (NIPS) =====
+
+const REVIEWS_FILE_PATH = path.join(__dirname, 'reviews.json');
+
+// Load reviews from file on startup
+async function loadReviews() {
+  try {
+    const data = await fs.readFile(REVIEWS_FILE_PATH, 'utf8');
+    reviews = JSON.parse(data);
+    console.log(`Loaded ${reviews.length} reviews from file`);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      console.log('No existing reviews file found, starting fresh');
+    } else {
+      console.error('Error loading reviews:', error);
+    }
+  }
+}
+
+// Save reviews to file
+async function saveReviews() {
+  try {
+    await fs.writeFile(REVIEWS_FILE_PATH, JSON.stringify(reviews, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Error saving reviews:', error);
+  }
+}
+
+// Load reviews when server starts
+loadReviews();
+
+// Submit a review
+app.post('/api/nips/review', async (req, res) => {
+  const { rating, message } = req.body;
+
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ success: false, error: 'Please provide a valid rating (1-5)' });
+  }
+
+  const review = {
+    id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+    rating: parseInt(rating),
+    message: String(message || '').trim(),
+    timestamp: new Date().toISOString(),
+    submittedAt: Date.now()
+  };
+
+  reviews.push(review);
+
+  // Save to file asynchronously
+  saveReviews().catch(err => console.error('Failed to save reviews:', err));
+
+  res.json({ success: true, review });
+});
+
+// Get all reviews (for admin viewing)
+app.get('/api/nips/reviews', (req, res) => {
+  res.json({
+    success: true,
+    count: reviews.length,
+    reviews: reviews.sort((a, b) => b.submittedAt - a.submittedAt)
+  });
 });
 
 // ===== AUDITIONS =====
@@ -1143,6 +1210,10 @@ app.get('/race/admin', (req, res) => {
 
 app.get('/race/cupcakes', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'race', 'cupcakes.html'));
+});
+
+app.get('/nips', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'nips.html'));
 });
 
 // Join race
